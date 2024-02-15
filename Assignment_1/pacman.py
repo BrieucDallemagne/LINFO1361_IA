@@ -11,24 +11,27 @@ from search import *
 # Problem class #
 #################
 dico = {}
+last = ""
 class Pacman(Problem):
 
-
+    def find_pacman(self, state):
+        for i in range(0, state.shape[0]):
+            for j in range(0, state.shape[1]):
+                if state.grid[i][j] == 'P':
+                    return (i, j)
 
     def actions(self, state):
         # Return the list of actions that can be executed in the given state
         actions = []
-        for i in range(0, state.shape[0]):
-            for j in range(0, state.shape[1]):
-                if state.grid[i][j] == 'P':
-                    if i > 0 and state.grid[i-1][j] != 'W':
-                        actions.append("UP")
-                    if i < state.shape[0] - 1 and state.grid[i+1][j] != 'W':
-                        actions.append("DOWN")
-                    if j > 0 and state.grid[i][j-1] != 'W':
-                        actions.append("LEFT")
-                    if j < state.shape[1] - 1 and state.grid[i][j+1] != 'W':
-                        actions.append("RIGHT")
+        pacman = self.find_pacman(state)
+        if state.grid[pacman[0]+1][pacman[1]] != '#' and pacman[0]+1 != state.shape[0]:
+            actions.append("UP")
+        if state.grid[pacman[0]-1][pacman[1]] != '#' and pacman[0]-1 != -1:
+            actions.append("DOWN")  
+        if state.grid[pacman[0]][pacman[1]-1] != '#' and pacman[1]-1 != -1:
+            actions.append("LEFT")
+        if state.grid[pacman[0]][pacman[1]+1] != '#' and pacman[1]+1 != state.shape[1]:
+            actions.append("RIGHT")
         return actions
 
 
@@ -36,29 +39,27 @@ class Pacman(Problem):
         # Return the new state reached by executing the given action in the given state
         new_grid = [list(row) for row in state.grid]
         new_fruit_count = state.answer
-        for i in range(0, state.shape[0]):
-            for j in range(0, state.shape[1]):
-                if state.grid[i][j] == 'P':
-                    if action == "UP":
-                        if state.grid[i-1][j] == 'F':
-                            new_fruit_count -= 1
-                        new_grid[i][j] = ' '
-                        new_grid[i-1][j] = 'P'
-                    if action == "DOWN":
-                        if state.grid[i+1][j] == 'F':
-                            new_fruit_count -= 1
-                        new_grid[i][j] = ' '
-                        new_grid[i+1][j] = 'P'
-                    if action == "LEFT":
-                        if state.grid[i][j-1] == 'F':
-                            new_fruit_count -= 1
-                        new_grid[i][j] = ' '
-                        new_grid[i][j-1] = 'P'
-                    if action == "RIGHT":
-                        if state.grid[i][j+1] == 'F':
-                            new_fruit_count -= 1
-                        new_grid[i][j] = ' '
-                        new_grid[i][j+1] = 'P'
+        pacman = self.find_pacman(state)
+        if action == "UP":
+            new_grid[pacman[0]][pacman[1]] = ' '
+            if state.grid[pacman[0]+1][pacman[1]] == 'F':
+                new_fruit_count -= 1
+            new_grid[pacman[0]+1][pacman[1]] = 'P'
+        elif action == "DOWN":
+            new_grid[pacman[0]][pacman[1]] = ' '
+            if state.grid[pacman[0]-1][pacman[1]] == 'F':
+                new_fruit_count -= 1
+            new_grid[pacman[0]-1][pacman[1]] = 'P'
+        elif action == "LEFT":
+            new_grid[pacman[0]][pacman[1]] = ' '
+            if state.grid[pacman[0]][pacman[1]-1] == 'F':
+                new_fruit_count -= 1
+            new_grid[pacman[0]][pacman[1]-1] = 'P'
+        elif action == "RIGHT":
+            new_grid[pacman[0]][pacman[1]] = ' '
+            if state.grid[pacman[0]][pacman[1]+1] == 'F':
+                new_fruit_count -= 1
+            new_grid[pacman[0]][pacman[1]+1] = 'P'
         return State(state.shape, tuple(map(tuple, new_grid)), new_fruit_count, action)
         
     def goal_test(self, state):
