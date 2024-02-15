@@ -65,6 +65,21 @@ class Pacman(Problem):
     def goal_test(self, state):
         # Return True if the state is a goal state
         return state.answer == 0
+    
+    def init(self, state):
+        global dico
+        for i in range(0, state.shape[0]):
+            for j in range(0, state.shape[1]):
+                dico[(i, j)] = 1000
+        dico[(self.find_pacman(state)[0], self.find_pacman(state)[1])] = 0
+    
+    def fastest_path(self, state):
+        global dico
+        global last
+        #to finish
+        
+
+
 
 
 
