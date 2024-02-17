@@ -111,14 +111,17 @@ def read_instance_file(filepath):
     return (shape_x, shape_y), initial_grid, initial_fruit_count
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  
     if len(sys.argv) != 2:
         print(f"Usage: ./Pacman.py <path_to_instance_file>")
+        exit(1)
     filepath = sys.argv[1]
 
     shape, initial_grid, initial_fruit_count = read_instance_file(filepath)
     init_state = State(shape, tuple(initial_grid), initial_fruit_count, "Init")
     problem = Pacman(init_state)
+    
+    print(problem.find_pacman(init_state))
 
     # Example of search
     start_timer = time.perf_counter()
