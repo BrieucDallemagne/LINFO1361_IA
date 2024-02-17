@@ -19,19 +19,24 @@ class Pacman(Problem):
             for j in range(0, state.shape[1]):
                 if state.grid[i][j] == 'P':
                     return (i, j)
+    
+    def isInMaze(self, i,j, state):
+        return 0 <= i < state.shape[0] and 0 <= j < state.shape[1]
 
     def actions(self, state):
         # Return the list of actions that can be executed in the given state
         actions = []
         pacman = self.find_pacman(state)
-        if state.grid[pacman[0]+1][pacman[1]] != '#' and pacman[0]+1 != state.shape[0]:
+                
+        if self.isInMaze(pacman[0]+1,pacman[1], state) and state.grid[pacman[0]+1][pacman[1]] != '#':
             actions.append("UP")
-        if state.grid[pacman[0]-1][pacman[1]] != '#' and pacman[0]-1 != -1:
+        if self.isInMaze(pacman[0]-1,pacman[1], state) and state.grid[pacman[0]-1][pacman[1]] != '#':
             actions.append("DOWN")  
-        if state.grid[pacman[0]][pacman[1]-1] != '#' and pacman[1]-1 != -1:
+        if self.isInMaze(pacman[0],pacman[1]-1, state) and state.grid[pacman[0]][pacman[1]-1] != '#':
             actions.append("LEFT")
-        if state.grid[pacman[0]][pacman[1]+1] != '#' and pacman[1]+1 != state.shape[1]:
+        if self.isInMaze(pacman[0],pacman[1]+1, state) and state.grid[pacman[0]][pacman[1]+1] != '#':
             actions.append("RIGHT")
+            
         return actions
 
 
@@ -78,6 +83,35 @@ class Pacman(Problem):
         global last
         #to finish
         
+    def benchmark(self):
+        """Benchmark for question 3
+
+        Returns:
+            None: none
+        """
+        width_txt = "="*64
+        print("{0}\n| {1:^60} |\n{2}".format(width_txt,"Welcome to PacMan Benchmark 3000", width_txt))
+        
+        start = time.time_ns()
+        #depth_first_tree_search(self)
+        finish = time.time_ns()-start
+        print("| {0:<30} {1:>26} ns |\n{2}".format("Depth First TREE:",finish, width_txt))
+        
+        start = time.time_ns()
+        #breadth_first_tree_search(self)
+        finish = time.time_ns()-start
+        print("| {0:<30} {1:>26} ns |\n{2}".format("Depth First TREE:",finish, width_txt))
+
+        start = time.time_ns()
+        #depth_first_graph_search(self)
+        finish = time.time_ns()-start
+        print("| {0:<30} {1:>26} ns |\n{2}".format("Depth First GRAPH:",finish, width_txt))
+
+        start = time.time_ns()
+        #breadth_first_graph_search(self)
+        finish = time.time_ns()-start
+        print("| {0:<30} {1:>26} ns |\n{2}".format("Depth First GRAPH:",finish, width_txt))
+        
 
 
 
@@ -121,7 +155,8 @@ if __name__ == "__main__":
     init_state = State(shape, tuple(initial_grid), initial_fruit_count, "Init")
     problem = Pacman(init_state)
     
-    print(problem.find_pacman(init_state))
+    print(problem.initial)
+    problem.benchmark()
 
     # Example of search
     start_timer = time.perf_counter()
