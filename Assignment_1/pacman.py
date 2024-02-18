@@ -95,22 +95,22 @@ class Pacman(Problem):
         start = time.time_ns()
         #depth_first_tree_search(self)
         finish = time.time_ns()-start
-        print("| {0:<30} {1:>26} ns |\n{2}".format("Depth First TREE:",finish, width_txt))
+        print("| {0:<30} {1:>26.5f} s |\n{2}".format("Depth First TREE:",finish/1e9, width_txt))
         
         start = time.time_ns()
-        #breadth_first_tree_search(self)
+        breadth_first_tree_search(self)
         finish = time.time_ns()-start
-        print("| {0:<30} {1:>26} ns |\n{2}".format("Depth First TREE:",finish, width_txt))
+        print("| {0:<30} {1:>26.5f} s |\n{2}".format("Breadth First TREE:",finish/1e9, width_txt))
 
         start = time.time_ns()
         #depth_first_graph_search(self)
         finish = time.time_ns()-start
-        print("| {0:<30} {1:>26} ns |\n{2}".format("Depth First GRAPH:",finish, width_txt))
+        print("| {0:<30} {1:>26.5f} s |\n{2}".format("Depth First GRAPH:",finish/1e9, width_txt))
 
         start = time.time_ns()
-        #breadth_first_graph_search(self)
+        breadth_first_graph_search(self)
         finish = time.time_ns()-start
-        print("| {0:<30} {1:>26} ns |\n{2}".format("Depth First GRAPH:",finish, width_txt))
+        print("| {0:<30} {1:>26.5f} s |\n{2}".format("Breadth First GRAPH:",finish/1e9, width_txt))
         
 
 

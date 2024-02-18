@@ -208,8 +208,6 @@ def depth_first_tree_search(problem):
 
     frontier = [Node(problem.initial)]  # Stack
     
-    print(f"frontier {frontier}")
-
     explored_nodes = 0
     while frontier:
         node = frontier.pop()
