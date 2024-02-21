@@ -18,7 +18,6 @@ class Pacman(Problem):
         super().__init__(init_state,goal)
         self.prev_action = "" 
         self.visited = [[False for i in range(init_state.shape[1])] for j in range(init_state.shape[0])]
-        self.print_visited()
         # Added a new attribute to keep track of the previous action
 
     def find_pacman(self, state):
@@ -31,7 +30,7 @@ class Pacman(Problem):
         # Check if next position is valid
         return 0 <= i < state.shape[0] and 0 <= j < state.shape[1] and state.grid[i][j] != '#' and not self.visited[i][j]
 
-    def actions(self, state):
+    def actions2(self, state):
         # Return the list of actions that can be executed in the given state
         actions = []
         pacman = self.find_pacman(state)
@@ -47,10 +46,11 @@ class Pacman(Problem):
             
         return actions
     
-    def actions2(self, state):
+    def actions(self, state):
         actions = []
         pacman = self.find_pacman(state)
         
+        wall = {"UP": False, "DOWN": False, "LEFT": False, "RIGHT": False}
         stillPossible = True 
         i = 1
         
@@ -60,24 +60,33 @@ class Pacman(Problem):
             
             stillPossible = False
             
-            if self.possible_move(pacman[0] + i, pacman[1], state):
+            if not wall["UP"] and self.possible_move(pacman[0] + i, pacman[1], state):
                 actions.append((pacman[0] + i, pacman[1]))
                 stillPossible = True
+            else:
+                wall["UP"] = True
                 
-            if self.possible_move(pacman[0] - i, pacman[1], state):
+            if not wall["DOWN"] and self.possible_move(pacman[0] - i, pacman[1], state):
                 actions.append((pacman[0] - i, pacman[1]))
                 stillPossible = True
+            else:
+                wall["DOWN"] = True
             
-            if self.possible_move(pacman[0], pacman[1] + i, state):
+            if not wall["RIGHT"] and self.possible_move(pacman[0], pacman[1] + i, state):
                 actions.append((pacman[0], pacman[1] + i))
                 stillPossible = True
+            else:
+                wall["RIGHT"] = True
                 
-            if self.possible_move(pacman[0], pacman[1] - i, state):
+            if not wall["LEFT"] and self.possible_move(pacman[0], pacman[1] - i, state):
                 actions.append((pacman[0], pacman[1] - i))
                 stillPossible = True
+            else:
+                wall["LEFT"] = True
                 
             i+=1
-
+            
+        return actions
 
     def result(self, state, action):
         # Return the new state reached by executing the given action in the given state
@@ -86,34 +95,13 @@ class Pacman(Problem):
         pacman = self.find_pacman(state)
         
         # Test Thomas --> repeating the action
-        
-        
-        if action == "UP":
-            new_grid[pacman[0]][pacman[1]] = "."
-            if state.grid[pacman[0]+1][pacman[1]] == 'F':
-                new_fruit_count -= 1
-            new_grid[pacman[0]+1][pacman[1]] = 'P'
-            self.visited[pacman[0]+1][pacman[1]] = True
-        elif action == "DOWN":
-            new_grid[pacman[0]][pacman[1]] = "."
-            if state.grid[pacman[0]-1][pacman[1]] == 'F':
-                new_fruit_count -= 1
-            new_grid[pacman[0]-1][pacman[1]] = 'P'
-            self.visited[pacman[0]-1][pacman[1]] = True
-        elif action == "LEFT":
-            new_grid[pacman[0]][pacman[1]] = "."
-            if state.grid[pacman[0]][pacman[1]-1] == 'F':
-                new_fruit_count -= 1
-            new_grid[pacman[0]][pacman[1]-1] = 'P'
-            self.visited[pacman[0]][pacman[1]-1] = True
-        elif action == "RIGHT":
-            new_grid[pacman[0]][pacman[1]] = "."
-            if state.grid[pacman[0]][pacman[1]+1] == 'F':
-                new_fruit_count -= 1
-            new_grid[pacman[0]][pacman[1]+1] = 'P'
-            self.visited[pacman[0]][pacman[1]+1] = True
+        new_grid[pacman[0]][pacman[1]] = "."
+        if state.grid[action[0]][action[1]] == 'F':
+            new_fruit_count -= 1
+        new_grid[action[0]][action[1]] = "P"
+        self.visited[action[0]][action[1]] = True
             
-        return State(state.shape, tuple(map(tuple, new_grid)), new_fruit_count, action)
+        return State(state.shape, tuple(map(tuple, new_grid)), new_fruit_count, f"Move to {action}")
     
     def goal_test(self, state):
         # Return True if the state is a goal state
@@ -208,4 +196,3 @@ if __name__ == "__main__":
     print("* #Nodes explored:\t", nb_explored)
     print("* Queue size at goal:\t",  remaining_nodes)
     
-    problem.print_visited()
