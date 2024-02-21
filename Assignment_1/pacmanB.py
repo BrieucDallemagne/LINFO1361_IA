@@ -11,7 +11,6 @@ from search import *
 # Problem class #
 #################
 dico = {}
-last = ""
 class Pacman(Problem):
 
     def find_pacman(self, state):
@@ -22,23 +21,73 @@ class Pacman(Problem):
     
     def possible_move(self, i,j, state):
         # Check if next position is valid
+        # return True if valid, False otherwise
         return 0 <= i < state.shape[0] and 0 <= j < state.shape[1] and state.grid[i][j] != '#' and state.grid[i][j] != ' '
+    
+    def keep_track(self, i,j, state, last_action):
+        # recieve last action and keep trying this action until it is not possible
+        # return the number of time the action was possible
+        count = 1
+        while self.possible_move(i,j, state):
+            count += 1
+            if last_action == "UP":
+                i += 1
+            elif last_action == "DOWN":
+                i -= 1
+            elif last_action == "LEFT":
+                j -= 1
+            elif last_action == "RIGHT":
+                j += 1
+        return count
+
 
     def actions(self, state):
-        # Return the list of actions that can be executed in the given state
+        # Return the list of actions that can be executed in the given state, n time the same action is also considered as 1 action
         actions = []
+        chosed = " "
         pacman = self.find_pacman(state)
-                
-        if self.possible_move(pacman[0]+1,pacman[1], state) :
+        if self.possible_move(pacman[0]+1, pacman[1], state):
             actions.append("UP")
-        if self.possible_move(pacman[0]-1,pacman[1], state) :
-            actions.append("DOWN")  
-        if self.possible_move(pacman[0],pacman[1]-1, state) :
-            actions.append("LEFT")
-        if self.possible_move(pacman[0],pacman[1]+1, state) :
+            chosed = "UP"
+            count = self.keep_track(pacman[0]+1, pacman[1], state, chosed)
+            if count > 1:
+                for i in range(2, count):
+                    actions.append("UP"*i)
+        if self.possible_move(pacman[0]-1, pacman[1], state):
+            actions.append("DOWN")
+            chosed = "DOWN"
+            count = self.keep_track(pacman[0]-1, pacman[1], state, chosed)
+            if count > 1:
+                for i in range(2, count):
+                    actions.append("DOWN"*i)
+        if self.possible_move(pacman[0], pacman[1]-1, state):
+            actions.append("LEFT")  
+            chosed = "LEFT"
+            count = self.keep_track(pacman[0], pacman[1]-1, state, chosed)
+            if count > 1:
+                for i in range(2, count):
+                    actions.append("LEFT"*i)
+        if self.possible_move(pacman[0], pacman[1]+1, state ):
             actions.append("RIGHT")
+            chosed = "RIGHT"
+            count = self.keep_track(pacman[0], pacman[1]+1, state, chosed)
+            if count > 1:
+                for i in range(2, count):
+                    actions.append("RIGHT"*i)
+
+        for act in actions:
+            print(act)
             
+        
         return actions
+    
+    def count_nbr_time_same_action(self, action):
+        act = action[0]
+        count = 1
+        while action[count] == act:
+            count += 1
+        return count
+
 
 
     def result(self, state, action):
