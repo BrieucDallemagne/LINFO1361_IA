@@ -20,21 +20,21 @@ class Pacman(Problem):
                 if state.grid[i][j] == 'P':
                     return (i, j)
     
-    def isInMaze(self, i,j, state):
-        return 0 <= i < state.shape[0] and 0 <= j < state.shape[1]
+    def possible_move(self, i,j, state):
+        return 0 <= i < state.shape[0] and 0 <= j < state.shape[1] and state.grid[i][j] != '#' and state.grid[i][j] != ' '
 
     def actions(self, state):
         # Return the list of actions that can be executed in the given state
         actions = []
         pacman = self.find_pacman(state)
                 
-        if self.isInMaze(pacman[0]+1,pacman[1], state) and state.grid[pacman[0]+1][pacman[1]] != '#':
+        if self.possible_move(pacman[0]+1,pacman[1], state) :
             actions.append("UP")
-        if self.isInMaze(pacman[0]-1,pacman[1], state) and state.grid[pacman[0]-1][pacman[1]] != '#':
+        if self.possible_move(pacman[0]-1,pacman[1], state) and state.grid[pacman[0]-1][pacman[1]] != '#':
             actions.append("DOWN")  
-        if self.isInMaze(pacman[0],pacman[1]-1, state) and state.grid[pacman[0]][pacman[1]-1] != '#':
+        if self.possible_move(pacman[0],pacman[1]-1, state) and state.grid[pacman[0]][pacman[1]-1] != '#':
             actions.append("LEFT")
-        if self.isInMaze(pacman[0],pacman[1]+1, state) and state.grid[pacman[0]][pacman[1]+1] != '#':
+        if self.possible_move(pacman[0],pacman[1]+1, state) and state.grid[pacman[0]][pacman[1]+1] != '#':
             actions.append("RIGHT")
             
         return actions
@@ -66,22 +66,11 @@ class Pacman(Problem):
                 new_fruit_count -= 1
             new_grid[pacman[0]][pacman[1]+1] = 'P'
         return State(state.shape, tuple(map(tuple, new_grid)), new_fruit_count, action)
-        
+    
     def goal_test(self, state):
         # Return True if the state is a goal state
         return state.answer == 0
     
-    def init(self, state):
-        global dico
-        for i in range(0, state.shape[0]):
-            for j in range(0, state.shape[1]):
-                dico[(i, j)] = 1000
-        dico[(self.find_pacman(state)[0], self.find_pacman(state)[1])] = 0
-    
-    def fastest_path(self, state):
-        global dico
-        global last
-        #to finish
         
     def benchmark(self):
         """Benchmark for question 3
@@ -93,7 +82,7 @@ class Pacman(Problem):
         print("{0}\n| {1:^60} |\n{2}".format(width_txt,"Welcome to PacMan Benchmark 3000", width_txt))
         
         start = time.time_ns()
-        #depth_first_tree_search(self)
+        depth_first_tree_search(self)
         finish = time.time_ns()-start
         print("| {0:<30} {1:>26.5f} s |\n{2}".format("Depth First TREE:",finish/1e9, width_txt))
         
@@ -103,7 +92,7 @@ class Pacman(Problem):
         print("| {0:<30} {1:>26.5f} s |\n{2}".format("Breadth First TREE:",finish/1e9, width_txt))
 
         start = time.time_ns()
-        #depth_first_graph_search(self)
+        depth_first_graph_search(self)
         finish = time.time_ns()-start
         print("| {0:<30} {1:>26.5f} s |\n{2}".format("Depth First GRAPH:",finish/1e9, width_txt))
 
