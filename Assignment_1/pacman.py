@@ -13,6 +13,13 @@ from search import *
 dico = {}
 last = ""
 class Pacman(Problem):
+    
+    def __init__(self, init_state, goal=None):
+        super().__init__(init_state,goal)
+        self.prev_action = "" 
+        self.visited = [[False for i in range(init_state.shape[1])] for j in range(init_state.shape[0])]
+        self.print_visited()
+        # Added a new attribute to keep track of the previous action
 
     def find_pacman(self, state):
         for i in range(0, state.shape[0]):
@@ -22,7 +29,7 @@ class Pacman(Problem):
     
     def possible_move(self, i,j, state):
         # Check if next position is valid
-        return 0 <= i < state.shape[0] and 0 <= j < state.shape[1] and state.grid[i][j] != '#' and state.grid[i][j] != ' '
+        return 0 <= i < state.shape[0] and 0 <= j < state.shape[1] and state.grid[i][j] != '#' and not self.visited[i][j]
 
     def actions(self, state):
         # Return the list of actions that can be executed in the given state
@@ -39,6 +46,37 @@ class Pacman(Problem):
             actions.append("RIGHT")
             
         return actions
+    
+    def actions2(self, state):
+        actions = []
+        pacman = self.find_pacman(state)
+        
+        stillPossible = True 
+        i = 1
+        
+        while stillPossible:
+            # Explanation: We check if the next position is valid and if it is, we add it to the list of actions
+            # stillPossible indicates that we can still go further. In other words didn't encounter a wall or an edge for one of the directions
+            
+            stillPossible = False
+            
+            if self.possible_move(pacman[0] + i, pacman[1], state):
+                actions.append((pacman[0] + i, pacman[1]))
+                stillPossible = True
+                
+            if self.possible_move(pacman[0] - i, pacman[1], state):
+                actions.append((pacman[0] - i, pacman[1]))
+                stillPossible = True
+            
+            if self.possible_move(pacman[0], pacman[1] + i, state):
+                actions.append((pacman[0], pacman[1] + i))
+                stillPossible = True
+                
+            if self.possible_move(pacman[0], pacman[1] - i, state):
+                actions.append((pacman[0], pacman[1] - i))
+                stillPossible = True
+                
+            i+=1
 
 
     def result(self, state, action):
@@ -46,26 +84,35 @@ class Pacman(Problem):
         new_grid = [list(row) for row in state.grid]
         new_fruit_count = state.answer
         pacman = self.find_pacman(state)
+        
+        # Test Thomas --> repeating the action
+        
+        
         if action == "UP":
-            new_grid[pacman[0]][pacman[1]] = ' '
+            new_grid[pacman[0]][pacman[1]] = "."
             if state.grid[pacman[0]+1][pacman[1]] == 'F':
                 new_fruit_count -= 1
             new_grid[pacman[0]+1][pacman[1]] = 'P'
+            self.visited[pacman[0]+1][pacman[1]] = True
         elif action == "DOWN":
-            new_grid[pacman[0]][pacman[1]] = ' '
+            new_grid[pacman[0]][pacman[1]] = "."
             if state.grid[pacman[0]-1][pacman[1]] == 'F':
                 new_fruit_count -= 1
             new_grid[pacman[0]-1][pacman[1]] = 'P'
+            self.visited[pacman[0]-1][pacman[1]] = True
         elif action == "LEFT":
-            new_grid[pacman[0]][pacman[1]] = ' '
+            new_grid[pacman[0]][pacman[1]] = "."
             if state.grid[pacman[0]][pacman[1]-1] == 'F':
                 new_fruit_count -= 1
             new_grid[pacman[0]][pacman[1]-1] = 'P'
+            self.visited[pacman[0]][pacman[1]-1] = True
         elif action == "RIGHT":
-            new_grid[pacman[0]][pacman[1]] = ' '
+            new_grid[pacman[0]][pacman[1]] = "."
             if state.grid[pacman[0]][pacman[1]+1] == 'F':
                 new_fruit_count -= 1
             new_grid[pacman[0]][pacman[1]+1] = 'P'
+            self.visited[pacman[0]][pacman[1]+1] = True
+            
         return State(state.shape, tuple(map(tuple, new_grid)), new_fruit_count, action)
     
     def goal_test(self, state):
@@ -102,7 +149,14 @@ class Pacman(Problem):
         finish = time.time_ns()-start
         print("| {0:<30} {1:>26.5f} s |\n{2}".format("Breadth First GRAPH:",finish/1e9, width_txt))
         
-
+    def print_visited(self):
+        for i in range(len(self.visited)):
+            for j in range(len(self.visited[0])):
+                if self.visited[i][j]:
+                    print("X", end="")
+                else:
+                    print("O", end="")
+            print()
 
 
 
@@ -153,3 +207,5 @@ if __name__ == "__main__":
     print("* Path cost to goal:\t", node.depth, "moves")
     print("* #Nodes explored:\t", nb_explored)
     print("* Queue size at goal:\t",  remaining_nodes)
+    
+    problem.print_visited()
