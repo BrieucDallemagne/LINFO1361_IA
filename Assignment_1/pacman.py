@@ -13,13 +13,6 @@ from search import *
 dico = {}
 last = ""
 class Pacman(Problem):
-    
-    def __init__(self, init_state, goal=None):
-        super().__init__(init_state,goal)
-        self.prev_action = "" 
-        self.visited = [[False for i in range(init_state.shape[1])] for j in range(init_state.shape[0])]
-        # Added a new attribute to keep track of the previous action
-
     def find_pacman(self, state):
         for i in range(0, state.shape[0]):
             for j in range(0, state.shape[1]):
@@ -28,8 +21,10 @@ class Pacman(Problem):
     
     def possible_move(self, i,j, state):
         # Check if next position is valid
-        return 0 <= i < state.shape[0] and 0 <= j < state.shape[1] and state.grid[i][j] != '#' and not self.visited[i][j]
+        visited = state.visited
+        return 0 <= i < state.shape[0] and 0 <= j < state.shape[1] and state.grid[i][j] != '#' and not visited[i][j]
 
+    """
     def actions2(self, state):
         # Return the list of actions that can be executed in the given state
         actions = []
@@ -45,7 +40,8 @@ class Pacman(Problem):
             actions.append("RIGHT")
             
         return actions
-    
+    """
+        
     def actions(self, state):
         actions = []
         pacman = self.find_pacman(state)
@@ -92,16 +88,21 @@ class Pacman(Problem):
         # Return the new state reached by executing the given action in the given state
         new_grid = [list(row) for row in state.grid]
         new_fruit_count = state.answer
+        visited = state.visited
         pacman = self.find_pacman(state)
         
         # Test Thomas --> repeating the action
         new_grid[pacman[0]][pacman[1]] = "."
         if state.grid[action[0]][action[1]] == 'F':
+            #NEED to update the fruit count and adapt for multiple fruits
             new_fruit_count -= 1
+            visited = [[False for i in range(state.shape[1])] for j in range(state.shape[0])]
+        
         new_grid[action[0]][action[1]] = "P"
-        self.visited[action[0]][action[1]] = True
+        visited[action[0]][action[1]] = True
             
-        return State(state.shape, tuple(map(tuple, new_grid)), new_fruit_count, f"Move to {action}")
+        # I prefer to pass the matrix visited immediately instead of handling it with the string Action
+        return State(state.shape, tuple(map(tuple, new_grid)), new_fruit_count, f"Move to {action}", visited)
     
     def goal_test(self, state):
         # Return True if the state is a goal state
@@ -153,11 +154,15 @@ class Pacman(Problem):
 # State class #
 ###############
 class State:
-    def __init__(self, shape, grid, answer=None, move="Init"):
+    def __init__(self, shape, grid, answer=None, move="Init", visited=None):
         self.shape = shape
         self.answer = answer
         self.grid = grid
         self.move = move
+        if visited is None:
+            self.visited = [[False for i in range(shape[1])] for j in range(shape[0])]
+        else:
+            self.visited = visited
         
     def __str__(self):
         s = self.move + "\n"
@@ -185,7 +190,7 @@ if __name__ == "__main__":
     # Example of search
     start_timer = time.perf_counter()
     node, nb_explored, remaining_nodes = breadth_first_tree_search(problem)
-    end_timer = time.perf_counter()
+    end_timer = time.perf_counter()   
     # Example of print
     path = node.path()
     for n in path:

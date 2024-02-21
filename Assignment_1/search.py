@@ -194,6 +194,7 @@ def breadth_first_tree_search(problem):
         if problem.goal_test(node.state):
             return node, explored_nodes, len(frontier)
         frontier.extend(node.expand(problem))
+        
     return None, explored_nodes, len(frontier)
 
 
