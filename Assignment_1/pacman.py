@@ -91,18 +91,21 @@ class Pacman(Problem):
         visited = state.visited
         pacman = self.find_pacman(state)
         
-        # Test Thomas --> repeating the action
-        new_grid[pacman[0]][pacman[1]] = "."
+        actionTxT = f"Move to {action}"
+        
         if state.grid[action[0]][action[1]] == 'F':
-            #NEED to update the fruit count and adapt for multiple fruits
             new_fruit_count -= 1
+            actionTxT += " Goal State"
+            # Checking if there is another fruit further
+            
             visited = [[False for i in range(state.shape[1])] for j in range(state.shape[0])]
         
+        new_grid[pacman[0]][pacman[1]] = "."        
         new_grid[action[0]][action[1]] = "P"
         visited[action[0]][action[1]] = True
             
         # I prefer to pass the matrix visited immediately instead of handling it with the string Action
-        return State(state.shape, tuple(map(tuple, new_grid)), new_fruit_count, f"Move to {action}", visited)
+        return State(state.shape, tuple(map(tuple, new_grid)), new_fruit_count, actionTxT, visited)
     
     def goal_test(self, state):
         # Return True if the state is a goal state
