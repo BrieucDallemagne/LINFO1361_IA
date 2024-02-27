@@ -21,8 +21,7 @@ class Pacman(Problem):
     
     def possible_move(self, i,j, state):
         # Check if next position is valid
-        visited = state.visited
-        return 0 <= i < state.shape[0] and 0 <= j < state.shape[1] and state.grid[i][j] != '#' and not visited[i][j]
+        return 0 <= i < state.shape[0] and 0 <= j < state.shape[1] and state.grid[i][j] != '#'
 
     """
     def actions2(self, state):
@@ -88,7 +87,6 @@ class Pacman(Problem):
         # Return the new state reached by executing the given action in the given state
         new_grid = [list(row) for row in state.grid]
         new_fruit_count = state.answer
-        visited = state.visited
         pacman = self.find_pacman(state)
         
         actionTxT = f"Move to {action}"
@@ -97,15 +95,12 @@ class Pacman(Problem):
             new_fruit_count -= 1
             actionTxT += " Goal State"
             # Checking if there is another fruit further
-            
-            visited = [[False for i in range(state.shape[1])] for j in range(state.shape[0])]
-        
+                    
         new_grid[pacman[0]][pacman[1]] = "."        
         new_grid[action[0]][action[1]] = "P"
-        visited[action[0]][action[1]] = True
             
         # I prefer to pass the matrix visited immediately instead of handling it with the string Action
-        return State(state.shape, tuple(map(tuple, new_grid)), new_fruit_count, actionTxT, visited)
+        return State(state.shape, tuple(map(tuple, new_grid)), new_fruit_count, actionTxT)
     
     def goal_test(self, state):
         # Return True if the state is a goal state
@@ -140,15 +135,6 @@ class Pacman(Problem):
         breadth_first_graph_search(self)
         finish = time.time_ns()-start
         print("| {0:<30} {1:>26.5f} s |\n{2}".format("Breadth First GRAPH:",finish/1e9, width_txt))
-        
-    def print_visited(self):
-        for i in range(len(self.visited)):
-            for j in range(len(self.visited[0])):
-                if self.visited[i][j]:
-                    print("X", end="")
-                else:
-                    print("O", end="")
-            print()
 
 
 
@@ -157,21 +143,26 @@ class Pacman(Problem):
 # State class #
 ###############
 class State:
-    def __init__(self, shape, grid, answer=None, move="Init", visited=None):
+    def __init__(self, shape, grid, answer=None, move="Init"):
         self.shape = shape
         self.answer = answer
         self.grid = grid
         self.move = move
-        if visited is None:
-            self.visited = [[False for i in range(shape[1])] for j in range(shape[0])]
-        else:
-            self.visited = visited
+
         
     def __str__(self):
         s = self.move + "\n"
         for line in self.grid:
             s += "".join(line) + "\n"
         return s
+    
+    
+    def __hash__(self) -> int:
+        # hash for the class State
+        return hash((self.grid))
+    
+    def __eq__(self, __value: object) -> bool:
+        return self.__hash__() == __value.__hash__()
     
     
 def read_instance_file(filepath):
