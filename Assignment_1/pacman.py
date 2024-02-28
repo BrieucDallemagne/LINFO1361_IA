@@ -119,24 +119,33 @@ class Pacman(Problem):
         print("{0}\n| {1:^60} |\n{2}".format(width_txt,"Welcome to PacMan Benchmark 3000", width_txt))
         
         start = time.time_ns()
-        depth_first_tree_search(self)
+        #node, nb_explored, remaining_nodes = depth_first_tree_search(self)
         finish = time.time_ns()-start
         print("| {0:<30} {1:>26.5f} s |\n{2}".format("Depth First TREE:",finish/1e9, width_txt))
         
         start = time.time_ns()
-        breadth_first_tree_search(self)
+        node, nb_explored, remaining_nodes = breadth_first_tree_search(self)
         finish = time.time_ns()-start
-        print("| {0:<30} {1:>26.5f} s |\n{2}".format("Breadth First TREE:",finish/1e9, width_txt))
+        print("| {0:<30} {1:>26.5f} s |".format("Breadth First TREE:",finish/1e9))
+        print("| {0:<30} {1:>28} |".format("Nodes explored:",nb_explored))
+        print("| {0:<30} {1:>28} |".format("Nodes remaining:",nb_explored))
+        print("| {0:<30} {1:>28} |\n{2}".format("Path cost",str(node.depth) +" moves", width_txt))
 
         start = time.time_ns()
-        depth_first_graph_search(self)
+        node, nb_explored, remaining_nodes = depth_first_graph_search(self)
         finish = time.time_ns()-start
-        print("| {0:<30} {1:>26.5f} s |\n{2}".format("Depth First GRAPH:",finish/1e9, width_txt))
+        print("| {0:<30} {1:>26.5f} s |".format("Depth First GRAPH:",finish/1e9))
+        print("| {0:<30} {1:>28} |".format("Nodes explored:",nb_explored))
+        print("| {0:<30} {1:>28} |".format("Nodes remaining:",nb_explored))
+        print("| {0:<30} {1:>28} |\n{2}".format("Path cost",str(node.depth) +" moves", width_txt))
 
         start = time.time_ns()
-        breadth_first_graph_search(self)
+        node, nb_explored, remaining_nodes = breadth_first_graph_search(self)
         finish = time.time_ns()-start
-        print("| {0:<30} {1:>26.5f} s |\n{2}".format("Breadth First GRAPH:",finish/1e9, width_txt))
+        print("| {0:<30} {1:>26.5f} s |".format("Breadth First GRAPH:",finish/1e9))
+        print("| {0:<30} {1:>28} |".format("Nodes explored:",nb_explored))
+        print("| {0:<30} {1:>28} |".format("Nodes remaining:",nb_explored))
+        print("| {0:<30} {1:>28} |\n{2}".format("Path cost",str(node.depth) +" moves", width_txt))
 
 
 
@@ -166,7 +175,7 @@ class State:
     
     def __hash__(self) -> int:
         # hash for the class State
-        return hash((self.find_pacman(self.grid), self.answer, self.move, self.shape, self.grid))
+        return hash((self.find_pacman(self.grid), self.answer, self.move, self.grid))
     
     def __eq__(self, __value: object) -> bool:
         return isinstance(__value, State) and self.__hash__() == __value.__hash__()
@@ -188,6 +197,9 @@ if __name__ == "__main__":
     shape, initial_grid, initial_fruit_count = read_instance_file(filepath)
     init_state = State(shape, tuple(initial_grid), initial_fruit_count, "Init")
     problem = Pacman(init_state)
+    
+    problem.benchmark()
+    exit()
     # Example of search
     start_timer = time.perf_counter()
     node, nb_explored, remaining_nodes = breadth_first_graph_search(problem)
