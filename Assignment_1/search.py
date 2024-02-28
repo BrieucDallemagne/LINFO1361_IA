@@ -189,6 +189,8 @@ def breadth_first_tree_search(problem):
 
     explored_nodes = 0
     while frontier:
+               
+        print(len(frontier))
         node = frontier.popleft()
         explored_nodes += 1
         if problem.goal_test(node.state):
@@ -268,6 +270,7 @@ def breadth_first_graph_search(problem):
                 if problem.goal_test(child.state):
                     return child, explored_nodes, len(frontier)
                 frontier.append(child)
+    print("[LOG]: EXITED")
     return None, explored_nodes, len(frontier)
 
 

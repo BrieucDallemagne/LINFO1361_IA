@@ -48,7 +48,7 @@ class Pacman(Problem):
         wall = {"UP": False, "DOWN": False, "LEFT": False, "RIGHT": False}
         stillPossible = True 
         i = 1
-        
+               
         while stillPossible:
             # Explanation: We check if the next position is valid and if it is, we add it to the list of actions
             # stillPossible indicates that we can still go further. In other words didn't encounter a wall or an edge for one of the directions
@@ -93,7 +93,9 @@ class Pacman(Problem):
         
         if state.grid[action[0]][action[1]] == 'F':
             new_fruit_count -= 1
-            actionTxT += " Goal State"
+            
+            if self.goal_test(State(state.shape, tuple(map(tuple, new_grid)), new_fruit_count)):
+                actionTxT += " Goal State"
             # Checking if there is another fruit further
                     
         new_grid[pacman[0]][pacman[1]] = "."        
@@ -149,6 +151,11 @@ class State:
         self.grid = grid
         self.move = move
 
+    def find_pacman(self, state):
+        for i in range(0, len(state)):
+            for j in range(0, len(state[0])):
+                if state[i][j] == 'P':
+                    return (i, j)
         
     def __str__(self):
         s = self.move + "\n"
@@ -159,10 +166,10 @@ class State:
     
     def __hash__(self) -> int:
         # hash for the class State
-        return hash((self.grid))
+        return hash((self.find_pacman(self.grid), self.answer, self.move, self.shape, self.grid))
     
     def __eq__(self, __value: object) -> bool:
-        return self.__hash__() == __value.__hash__()
+        return isinstance(__value, State) and self.__hash__() == __value.__hash__()
     
     
 def read_instance_file(filepath):
@@ -183,7 +190,7 @@ if __name__ == "__main__":
     problem = Pacman(init_state)
     # Example of search
     start_timer = time.perf_counter()
-    node, nb_explored, remaining_nodes = breadth_first_tree_search(problem)
+    node, nb_explored, remaining_nodes = breadth_first_graph_search(problem)
     end_timer = time.perf_counter()   
     # Example of print
     path = node.path()
