@@ -147,8 +147,32 @@ class Pacman(Problem):
         print("| {0:<30} {1:>28} |".format("Nodes remaining:",nb_explored))
         print("| {0:<30} {1:>28} |\n{2}".format("Path cost",str(node.depth) +" moves", width_txt))
 
+    def latex(self):        
+        start = time.time_ns()
+        node, nb_explored, remaining_nodes = breadth_first_tree_search(self)
+        finish = time.time_ns()-start
+        
+        print("{0:.5f} & {1} & {2} ".format(finish/1e9, nb_explored, remaining_nodes), end="&")
 
+        start = time.time_ns()
+        node, nb_explored, remaining_nodes = breadth_first_graph_search(self)
+        finish = time.time_ns()-start
+        
+        print("{0:.5f} & {1} & {2} ".format(finish/1e9, nb_explored, remaining_nodes), end="&")
 
+        
+        start = time.time_ns()
+        #node, nb_explored, remaining_nodes = depth_first_tree_search(self)
+        finish = time.time_ns()-start
+        
+        print("{0:.5f} & {1} & {2} ".format(finish/1e9, nb_explored, remaining_nodes), end="&")
+
+        
+        start = time.time_ns()
+        node, nb_explored, remaining_nodes = depth_first_graph_search(self)
+        finish = time.time_ns()-start
+        
+        print("{0:.5f} & {1} & {2} ".format(finish/1e9, nb_explored, remaining_nodes),end="\\\\")
 
 ###############
 # State class #
@@ -194,11 +218,14 @@ if __name__ == "__main__":
     if len(sys.argv) != 2:
         print(f"Usage: ./Pacman.py <path_to_instance_file>")
     filepath = sys.argv[1]
+    print(filepath.split("/")[-1], end=" & ")
+
     shape, initial_grid, initial_fruit_count = read_instance_file(filepath)
     init_state = State(shape, tuple(initial_grid), initial_fruit_count, "Init")
     problem = Pacman(init_state)
     
-    problem.benchmark()
+    problem.latex()
+    print()
     exit()
     # Example of search
     start_timer = time.perf_counter()
