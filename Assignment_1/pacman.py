@@ -150,6 +150,7 @@ class Pacman(Problem):
     def latex(self):        
         start = time.time_ns()
         node, nb_explored, remaining_nodes = breadth_first_tree_search(self)
+        #snode, nb_explored, remaining_nodes = 0, 0, 0
         finish = time.time_ns()-start
         
         print("{0:.5f} & {1} & {2} ".format(finish/1e9, nb_explored, remaining_nodes), end="&")
@@ -162,7 +163,7 @@ class Pacman(Problem):
 
         
         start = time.time_ns()
-        #node, nb_explored, remaining_nodes = depth_first_tree_search(self)
+        node, nb_explored, remaining_nodes = 0, 0, 0
         finish = time.time_ns()-start
         
         print("{0:.5f} & {1} & {2} ".format(finish/1e9, nb_explored, remaining_nodes), end="&")
