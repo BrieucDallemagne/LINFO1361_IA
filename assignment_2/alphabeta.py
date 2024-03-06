@@ -45,7 +45,7 @@ class AlphaBetaAgent(Agent):
         Returns:
             bool: True if the search should be cut off, False otherwise.
         """
-        ...
+        return state.is_terminal() or depth >= self.max_depth
     
     def eval(self, state):
         """Evaluates the given state and returns a score from the perspective of the agent's player.
@@ -56,7 +56,7 @@ class AlphaBetaAgent(Agent):
         Returns:
             float: The evaluated score of the state.
         """
-        ...
+        return state.score[self.player] - state.score[1 - self.player]
 
     def alpha_beta_search(self, state):
         """Implements the alpha-beta pruning algorithm to find the best action.
@@ -86,7 +86,20 @@ class AlphaBetaAgent(Agent):
             tuple: A tuple containing the best value achievable from this state and the action that leads to this value.
                 If the state is a terminal state or the depth limit is reached, the action will be None.
         """
-        ...
+        if self.is_cutoff(state, depth):
+            return self.eval(state), None
+        value = -float("inf")
+        best_action = None
+        for action in state.get_actions():
+            child = state.apply_action(action)
+            v, _ = self.min_value(child, alpha, beta, depth + 1)
+            if v > value:
+                value = v
+                best_action = action
+            if value >= beta:
+                return value, best_action
+            alpha = max(alpha, value)
+        return value, best_action
 
 
     def min_value(self, state, alpha, beta, depth):
@@ -106,4 +119,17 @@ class AlphaBetaAgent(Agent):
             tuple: A tuple containing the best value achievable from this state for the opponent and the action that leads to this value.
                 If the state is a terminal state or the depth limit is reached, the action will be None.
         """
-        ...
+        if self.is_cutoff(state, depth):
+            return self.eval(state), None
+        value = float("inf")
+        best_action = None
+        for action in state.get_actions():
+            child = state.apply_action(action)
+            v, _ = self.max_value(child, alpha, beta, depth + 1)
+            if v < value:
+                value = v
+                best_action = action
+            if value <= alpha:
+                return value, best_action
+            beta = min(beta, value)
+        return value, best_action
