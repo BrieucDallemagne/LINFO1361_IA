@@ -73,6 +73,8 @@ def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
                 if log_file is not None:
                     logs.append(create_log(action, n_moves))
 
+                print(f"Action: {action}")
+
                 if action not in game.actions(state):
                     raise Exception(f"Invalid action: {action}")
                 
@@ -151,6 +153,8 @@ if __name__ == "__main__":
         }
         total_moves = []
         agent_white, agent_black = get_agents(args, args.display)
+        print("agent")
+        print(agent_white, agent_black)
         for i in range(0, args.n):
             if i % 25 == 0 and i > 0:
                 print(f"{i} -> White : {winners[0] / (i+1)}, Black : {winners[1] / (i+1)}, Draw : {winners[-1] / (i+1)}, mean numer of moves : {sum(total_moves) / len(total_moves)}")
@@ -162,5 +166,7 @@ if __name__ == "__main__":
     else:
         log_file = args.logs
         agent_white, agent_black = get_agents(args, args.display)
+        print("agent")
+        print(agent_white, agent_black)
         winner, n_moves = main(agent_white, agent_black, display=args.display, log_file=log_file, play_time=args.time)
         print(f"Winner: {winner}, n_moves: {n_moves}")
