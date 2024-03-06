@@ -138,4 +138,20 @@ class UCTAgent(Agent):
         Returns:
             float: The UCB1 value.
         """
-        ...
+        # Find if this will result into a win or lose for the given player
+        player = node.state.to_move
+        utility = node.state.utility
+        
+        if player == 0 and utility == 1:
+            w = 1
+        else:
+            w = 0
+        
+        c = math.sqrt(2)
+        n = node.N
+        
+        N = node.parent.N # Total number of simulation from the parent node
+        
+        U = w/n + c * math.sqrt(math.log(N)/n)
+        
+        return U

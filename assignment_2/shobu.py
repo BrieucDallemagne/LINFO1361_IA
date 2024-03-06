@@ -63,7 +63,7 @@ class ShobuState(NamedTuple):
           0 |  1 |  2 |  3
 
     Note:
-        To ease the comprihension of the board representation, the initial board configuration is represented as:
+        To ease the comprehension of the board representation, the initial board configuration is represented as:
             
             board = [
                 [{0, 1, 2, 3}, {12, 13, 14, 15}],
