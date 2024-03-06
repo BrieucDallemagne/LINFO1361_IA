@@ -91,7 +91,18 @@ class UCTAgent(Agent):
         Returns:
             Node: The selected leaf node.
         """
-        ...
+        
+        # We found a leaf node
+        if len(node.children) == 0:
+            return node
+        
+        val,i = 0,-1
+        for children in node.children:
+            if self.UCB1(children) > val:
+                val = self.UCB1(children)
+                i = children
+        
+        return self.select(node.children[i]) # Recursive approach until we hit a leaf node
     
     def expand(self, node):
         """Expands a node by adding a child node to the tree for an unexplored action.
@@ -107,7 +118,19 @@ class UCTAgent(Agent):
         Returns:
             Node: The newly created child node representing the state after an unexplored action. If the node is at a terminal state, the node itself is returned.
         """
-        ...
+        # Check if the node is a terminal state
+        if node.state.is_terminal():
+            return node
+        
+        # Creating all legal actions from this state
+        actions = node.state.get_legal_actions()
+        
+        for action in actions:
+            new_state = node.state.apply_action(action)
+            new_node = Node(node, new_state)
+            node.children[new_node] = action
+        
+        return node.children[random.choice(list(node.children.keys()))] # Randomly select a child node
 
     def simulate(self, state):
         """Simulates a random play-through from the given state to a terminal state.
@@ -118,7 +141,12 @@ class UCTAgent(Agent):
         Returns:
             float: The utility value of the terminal state for the player to move.
         """
-        ...
+        while state.is_terminal() == False:
+            action = random.choice(state.get_legal_actions())
+            state = state.apply_action(action)
+            
+            # Perhaps should add an escape sequence (for example stop after 50 moves)
+        return self.game.utility(state, self.player)
 
     def back_propagate(self, result, node):
         """Propagates the result of a simulation back up the tree, updating node statistics.
@@ -127,7 +155,13 @@ class UCTAgent(Agent):
             result (float): The result of the simulation.
             node (Node): The node to start backpropagation from.
         """
-        ...
+        # Watch out ! a win for black is a lose for white
+        win = result 
+        while node != None:
+            node.N += 1 
+            node.U += win
+            node = node.parent
+            win = (win + 1) % 2 # Switch between 0 and 1
 
     def UCB1(self, node):
         """Calculates the UCB1 value for a given node.
@@ -138,20 +172,11 @@ class UCTAgent(Agent):
         Returns:
             float: The UCB1 value.
         """
-        # Find if this will result into a win or lose for the given player
-        player = node.state.to_move
-        utility = node.state.utility
-        
-        if player == 0 and utility == 1:
-            w = 1
-        else:
-            w = 0
-        
+        # Find if this will result into a win or lose for the given player        
         c = math.sqrt(2)
         n = node.N
-        
+        U = node.U # Total reward from the node so the amount of win
         N = node.parent.N # Total number of simulation from the parent node
         
-        U = w/n + c * math.sqrt(math.log(N)/n)
-        
-        return U
+        return U/n + c * math.sqrt(math.log(N)/n)
+    
