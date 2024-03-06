@@ -72,11 +72,12 @@ class UCTAgent(Agent):
             ShobuAction: The action leading to the best-perceived outcome based on UCT algorithm.
         """
         root = Node(None, state)
-        for _ in range(self.iteration):
+        for i in range(self.iteration):
             leaf = self.select(root)
             child = self.expand(leaf)
             result = self.simulate(child.state)
             self.back_propagate(result, child)
+            print(f"[LOG]: Simulation {i+1}/{self.iteration} completed")
         max_state = max(root.children, key=lambda n: n.N)
         return root.children.get(max_state)
 
@@ -96,13 +97,13 @@ class UCTAgent(Agent):
         if len(node.children) == 0:
             return node
         
-        val,i = 0,-1
-        for children in node.children:
-            if self.UCB1(children) > val:
+        val,i = 0, 0
+        for children in node.children.keys():
+            if self.UCB1(children) >= val:
                 val = self.UCB1(children)
                 i = children
-        
-        return self.select(node.children[i]) # Recursive approach until we hit a leaf node
+                
+        return self.select(i) # Recursive approach until we hit a leaf node
     
     def expand(self, node):
         """Expands a node by adding a child node to the tree for an unexplored action.
@@ -119,18 +120,18 @@ class UCTAgent(Agent):
             Node: The newly created child node representing the state after an unexplored action. If the node is at a terminal state, the node itself is returned.
         """
         # Check if the node is a terminal state
-        if node.state.is_terminal():
+        if self.game.is_terminal(node.state):
             return node
         
         # Creating all legal actions from this state
-        actions = node.state.get_legal_actions()
+        actions = self.game.actions(node.state)
         
         for action in actions:
-            new_state = node.state.apply_action(action)
+            new_state = self.game.result(node.state, action)
             new_node = Node(node, new_state)
             node.children[new_node] = action
         
-        return node.children[random.choice(list(node.children.keys()))] # Randomly select a child node
+        return random.choice(list(node.children.keys())) # Randomly select a child node
 
     def simulate(self, state):
         """Simulates a random play-through from the given state to a terminal state.
@@ -141,9 +142,9 @@ class UCTAgent(Agent):
         Returns:
             float: The utility value of the terminal state for the player to move.
         """
-        while state.is_terminal() == False:
-            action = random.choice(state.get_legal_actions())
-            state = state.apply_action(action)
+        while self.game.is_terminal(state) == False:
+            action = random.choice(self.game.actions(state))
+            state = self.game.result(state, action)
             
             # Perhaps should add an escape sequence (for example stop after 50 moves)
         return self.game.utility(state, self.player)
@@ -175,8 +176,12 @@ class UCTAgent(Agent):
         # Find if this will result into a win or lose for the given player        
         c = math.sqrt(2)
         n = node.N
+        if n == 0:
+            n = 1
         U = node.U # Total reward from the node so the amount of win
         N = node.parent.N # Total number of simulation from the parent node
+        if N == 0:
+            N = 1
         
         return U/n + c * math.sqrt(math.log(N)/n)
     
