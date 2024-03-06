@@ -26,6 +26,12 @@ class Node:
         self.U = 0
         self.N = 0
         self.children = {}
+        
+    def __str__(self):
+        child_str = ""
+        for child in self.children.keys():
+            child_str += f"\t{child} \n"
+        return f"Node: {self.state} - U: {self.U} - N: {self.N} - Children: \n{child_str}"
 
 class UCTAgent(Agent):
     """An agent that uses the UCT algorithm to determine the best move.
@@ -78,6 +84,9 @@ class UCTAgent(Agent):
             result = self.simulate(child.state)
             self.back_propagate(result, child)
             print(f"[LOG]: Simulation {i+1}/{self.iteration} completed")
+        
+        print(root)
+        
         max_state = max(root.children, key=lambda n: n.N)
         return root.children.get(max_state)
 

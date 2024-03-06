@@ -29,6 +29,9 @@ class ShobuAction(NamedTuple):
     direction: int
     length: int
 
+    def __str__(self):
+        return f"Passive: {self.passive_board_id}, {self.passive_stone_id} - Active: {self.active_board_id}, {self.active_stone_id}, {self.direction}, {self.length}"
+    
 class ShobuState(NamedTuple):
     """Represents the current state of a Shobu game.
 
@@ -77,6 +80,9 @@ class ShobuState(NamedTuple):
     board: List[List[Set[int]]]
     actions: List[ShobuAction]
     count_boring_actions: int
+    
+    def __str__(self):
+        return f"{self.to_move} {self.board}"
 
 class ShobuGame:
     """Represents the game logic and state management for a game of Shobu.
