@@ -83,9 +83,9 @@ class UCTAgent(Agent):
             child = self.expand(leaf)
             result = self.simulate(child.state)
             self.back_propagate(result, child)
-            print(f"[LOG]: Simulation {i+1}/{self.iteration} completed")
+            #print(f"[LOG]: Simulation {i+1}/{self.iteration} completed")
         
-        print(root)
+        ##print(root)
         
         max_state = max(root.children, key=lambda n: n.N)
         return root.children.get(max_state)
@@ -102,15 +102,22 @@ class UCTAgent(Agent):
             Node: The selected leaf node.
         """
         
-        # We found a leaf node
-        if len(node.children) == 0:
+        amount_of_move = len(self.game.actions(node.state))
+        
+        # We found a leaf node, so We didn't expand all of his children
+        if amount_of_move > len(node.children):
+            #print("Leaf node")
             return node
         
+        #print("Going Recursive")
         val,i = 0, 0
         for children in node.children.keys():
             if self.UCB1(children) >= val:
                 val = self.UCB1(children)
                 i = children
+                
+                
+        #print(f"\tUCB1: {val} - {i}")
                 
         return self.select(i) # Recursive approach until we hit a leaf node
     
@@ -134,13 +141,29 @@ class UCTAgent(Agent):
         
         # Creating all legal actions from this state
         actions = self.game.actions(node.state)
+        actions_copy = actions.copy()
+        already_expanded = node.children.values()
         
+        # Remove already expanded actions
+        for action in actions:
+            if action in already_expanded:
+                actions_copy.remove(action)
+            
+        actions = actions_copy
+        
+        action_to_perform = random.choice(actions)
+        
+        new_node = Node(node, self.game.result(node.state, action_to_perform))
+        
+        node.children[new_node] = action_to_perform
+        
+        """
         for action in actions:
             new_state = self.game.result(node.state, action)
             new_node = Node(node, new_state)
             node.children[new_node] = action
-        
-        return random.choice(list(node.children.keys())) # Randomly select a child node
+        """
+        return new_node #random.choice(list(node.children.keys())) # Randomly select a child node
 
     def simulate(self, state):
         """Simulates a random play-through from the given state to a terminal state.
@@ -151,13 +174,23 @@ class UCTAgent(Agent):
         Returns:
             float: The utility value of the terminal state for the player to move.
         """
-        while self.game.is_terminal(state) == False:
+        # we want to know the utility for the player to move not the last player that may not be the same
+        player = state.to_move
+        i = 0
+        while self.game.is_terminal(state) == False and i < 500:
+            #print(f"\tSimulating {i+1}/500")
             action = random.choice(self.game.actions(state))
             state = self.game.result(state, action)
-            
-            # Perhaps should add an escape sequence (for example stop after 50 moves)
-        return self.game.utility(state, self.player)
-
+            i+=1
+        
+        #print(f"[LOG]: {self.game.utility(state, player)} - {player} - {state.to_move}")
+        
+        # Game utility for the player to move is either -1, 0 or 1 but we just want to know if it's a win
+        if self.game.utility(state, player) > 0:
+            return 1
+        else:
+            return 0
+        
     def back_propagate(self, result, node):
         """Propagates the result of a simulation back up the tree, updating node statistics.
 
@@ -166,12 +199,20 @@ class UCTAgent(Agent):
             node (Node): The node to start backpropagation from.
         """
         # Watch out ! a win for black is a lose for white
-        win = result 
+        win = result
+        player = node.state.to_move
+        
         while node != None:
-            node.N += 1 
-            node.U += win
+            node.N += 1
+            if node.state.to_move == player:
+                node.U += win
+                val = win
+            else:
+                node.U += (win+1) % 2
+                val = (win+1) % 2
+            #print(f"For player {node.state.to_move} - Win: {val} - N: {node.N} - U: {node.U}")
+
             node = node.parent
-            win = (win + 1) % 2 # Switch between 0 and 1
 
     def UCB1(self, node):
         """Calculates the UCB1 value for a given node.
@@ -186,11 +227,8 @@ class UCTAgent(Agent):
         c = math.sqrt(2)
         n = node.N
         if n == 0:
-            n = 1
+            return float('inf')
         U = node.U # Total reward from the node so the amount of win
         N = node.parent.N # Total number of simulation from the parent node
-        if N == 0:
-            N = 1
         
         return U/n + c * math.sqrt(math.log(N)/n)
-    
