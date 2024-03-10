@@ -26,12 +26,6 @@ class Node:
         self.U = 0
         self.N = 0
         self.children = {}
-        
-    def __str__(self):
-        child_str = ""
-        for child in self.children.keys():
-            child_str += f"\t{child} \n"
-        return f"Node: {self.state} - U: {self.U} - N: {self.N} - Children: \n{child_str}"
 
 class UCTAgent(Agent):
     """An agent that uses the UCT algorithm to determine the best move.
@@ -78,23 +72,46 @@ class UCTAgent(Agent):
             ShobuAction: The action leading to the best-perceived outcome based on UCT algorithm.
         """
         root = Node(None, state)
-        for i in range(self.iteration):
+        root.children = { Node(root, self.game.result(root.state, action)): action for action in self.game.actions(root.state) }
+        for _ in range(self.iteration):
             leaf = self.select(root)
             child = self.expand(leaf)
             result = self.simulate(child.state)
+            
+            #print(f"For palayer {self.player}, the result is {result}")
+            
             self.back_propagate(result, child)
-            #print(f"[LOG]: Simulation {i+1}/{self.iteration} completed")
-        
-        ##print(root)
+        #print(root.N, root.U)    
         
         max_state = max(root.children, key=lambda n: n.N)
         return root.children.get(max_state)
+    
+    def isLeaf(self, node):
+        """
+        A leaf is either a node in a terminal state, 
+        or a node with a child for which no simulation has yet been performed.
 
+        Args:
+            node (Node): the node to check
+        Returns:
+            bool: True if the node is a leaf, False otherwise
+        """
+        if self.game.is_terminal(node.state):
+            return True 
+
+        for child in node.children:
+            if child.N == 0:
+                return True
+
+        return False
+        
     def select(self, node):
         """Selects a leaf node using the UCB1 formula to maximize exploration and exploitation.
 
-        A node is considered a leaf if it has a potential child from which no simulation has yet been initiated or when the game is finished.
-
+        The function recursively selects the children of the node that maximise the UCB1 score, exploring the most promising 
+        path in the game tree. It stops when a leaf is found and returns it. A leaf is either a node in a terminal state, 
+        or a node with a child for which no simulation has yet been performed.
+        
         Args:
             node (Node): The node to select from.
 
@@ -102,68 +119,50 @@ class UCTAgent(Agent):
             Node: The selected leaf node.
         """
         
-        amount_of_move = len(self.game.actions(node.state))
-        
-        # We found a leaf node, so We didn't expand all of his children
-        if amount_of_move > len(node.children):
-            #print("Leaf node")
+        if self.isLeaf(node):
             return node
         
-        #print("Going Recursive")
-        val,i = 0, 0
-        for children in node.children.keys():
-            if self.UCB1(children) >= val:
-                val = self.UCB1(children)
-                i = children
-                
-                
-        #print(f"\tUCB1: {val} - {i}")
-                
-        return self.select(i) # Recursive approach until we hit a leaf node
+        maximum = float('-inf')
+        selected = None
+        
+        for child in node.children:
+            ucb = self.UCB1(child)
+            if ucb > maximum:
+                maximum = ucb
+                selected = child
+        
+        return selected 
     
     def expand(self, node):
         """Expands a node by adding a child node to the tree for an unexplored action.
 
-        This function generates all possible actions from the current state represented by the node if they haven't been explored yet. 
-        For each unexplored action, a new child node is created, representing the state resulting from that action. The function then 
-        selects one of these new child nodes and returns it. If the node represents a terminal state it effectively returns the node itself, 
-        indicating that the node cannot be expanded further.
+        The function returns one of the children of the node for which no simulation has yet been performed. 
+        In addition, the function must initialize all the children of that child node in the child's "children" dictionary. 
+        If the node is in a terminal state, the function returns itself, indicating that the node can no longer be expanded.
 
         Args:
             node (Node): The node to expand. This node represents the current state from which we want to explore possible actions.
 
         Returns:
-            Node: The newly created child node representing the state after an unexplored action. If the node is at a terminal state, the node itself is returned.
+            Node: The child node selected. If the node is at a terminal state, the node itself is returned.
         """
-        # Check if the node is a terminal state
+        # Check if it's a terminal state
         if self.game.is_terminal(node.state):
             return node
         
-        # Creating all legal actions from this state
-        actions = self.game.actions(node.state)
-        actions_copy = actions.copy()
-        already_expanded = node.children.values()
+        # Check if there are unexplored actions
+        unexplored_actions = []
+        for child in node.children:
+            if child.N == 0:
+                unexplored_actions.append(child)
         
-        # Remove already expanded actions
-        for action in actions:
-            if action in already_expanded:
-                actions_copy.remove(action)
-            
-        actions = actions_copy
+        # Select a random unexplored action
+        child = random.choice(unexplored_actions)
         
-        action_to_perform = random.choice(actions)
+        # Initialize the children of the child node
+        child.children = { Node(child, self.game.result(child.state, action)): action for action in self.game.actions(child.state) }
         
-        new_node = Node(node, self.game.result(node.state, action_to_perform))
-        
-        node.children[new_node] = action_to_perform
-        
-        """
-        for action in actions:
-            new_state = self.game.result(node.state, action)
-            new_node = Node(node, new_state)
-            node.children[new_node] = action
-        """
-        return new_node #random.choice(list(node.children.keys())) # Randomly select a child node
+        return child
 
     def simulate(self, state):
         """Simulates a random play-through from the given state to a terminal state.
@@ -172,63 +171,62 @@ class UCTAgent(Agent):
             state (ShobuState): The state to simulate from.
 
         Returns:
-            float: The utility value of the terminal state for the player to move.
+            float: The utility value of the resulting terminal state in the point of view of the opponent in the original state.
         """
-        # we want to know the utility for the player to move not the last player that may not be the same
-        player = state.to_move
+        # Set up a counter to avoid infinite loops and save what player is about to move
         i = 0
+        player = self.game.to_move(state)
+        
         while self.game.is_terminal(state) == False and i < 500:
-            #print(f"\tSimulating {i+1}/500")
             action = random.choice(self.game.actions(state))
             state = self.game.result(state, action)
-            i+=1
+            i += 1
         
-        #print(f"[LOG]: {self.game.utility(state, player)} - {player} - {state.to_move}")
-        
-        # Game utility for the player to move is either -1, 0 or 1 but we just want to know if it's a win
-        if self.game.utility(state, player) > 0:
+        # Need to inverse it because we look for the node behind not this state
+        if self.game.utility(state, player) == 1:
             return 1
-        else:
-            return 0
         
+        return 0
+
     def back_propagate(self, result, node):
         """Propagates the result of a simulation back up the tree, updating node statistics.
+
+        This method is responsible for updating the statistics for each node according to the result of the simulation. 
+        It recursively updates the U (utility) and N (number of visits) values for each node on the path from the given 
+        node to the root. The utility of a node is only updated if it is a node that must contain the win rate of the 
+        player who won the simulation, otherwise the utility is not modified.
 
         Args:
             result (float): The result of the simulation.
             node (Node): The node to start backpropagation from.
         """
-        # Watch out ! a win for black is a lose for white
-        win = result
-        player = node.state.to_move
+        # Escape condition
+        if node == None:
+            return
         
-        while node != None:
-            node.N += 1
-            if node.state.to_move == player:
-                node.U += win
-                val = win
-            else:
-                node.U += (win+1) % 2
-                val = (win+1) % 2
-            #print(f"For player {node.state.to_move} - Win: {val} - N: {node.N} - U: {node.U}")
-
-            node = node.parent
+        # Update the node statistics
+        node.N += 1
+        node.U += result
+        
+        # Alternate between 0 and 1
+        if result == 1:
+            result = 0
+        else:
+            result = 1
+        
+        self.back_propagate(result, node.parent)
+        
 
     def UCB1(self, node):
         """Calculates the UCB1 value for a given node.
 
         Args:
-            node (Node): The node to calculate the UCB1 value for.
+            node (Node): The node to calculate the UCB1 value for. 
 
         Returns:
-            float: The UCB1 value.
+            float: The UCB1 value of the node. Returns infinity if the node has not been visited yet.
         """
-        # Find if this will result into a win or lose for the given player        
-        c = math.sqrt(2)
-        n = node.N
-        if n == 0:
+        if node.N == 0:
             return float('inf')
-        U = node.U # Total reward from the node so the amount of win
-        N = node.parent.N # Total number of simulation from the parent node
         
-        return U/n + c * math.sqrt(math.log(N)/n)
+        return node.U / node.N + math.sqrt(2 * math.log(node.parent.N) / node.N)
