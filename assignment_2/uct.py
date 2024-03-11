@@ -176,6 +176,8 @@ class UCTAgent(Agent):
         # Set up a counter to avoid infinite loops and save what player is about to move
         i = 0
         player = self.game.to_move(state)
+        opponent = 1 - player
+        
         
         while self.game.is_terminal(state) == False and i < 500:
             action = random.choice(self.game.actions(state))
@@ -183,10 +185,7 @@ class UCTAgent(Agent):
             i += 1
         
         # Need to inverse it because we look for the node behind not this state
-        if self.game.utility(state, player) == 1:
-            return 1
-        
-        return 0
+        return self.game.utility(state, opponent)
 
     def back_propagate(self, result, node):
         """Propagates the result of a simulation back up the tree, updating node statistics.
