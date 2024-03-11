@@ -1,5 +1,4 @@
 from agent import Agent
-
 class AlphaBetaAgent(Agent):
     """An agent that uses the alpha-beta pruning algorithm to determine the best move.
 
@@ -56,7 +55,7 @@ class AlphaBetaAgent(Agent):
         Returns:
             float: The evaluated score of the state.
         """
-        return state.score[self.player] - state.score[1 - self.player]
+        return state.utility(self.player) - state.utility(1-self.player)
 
     def alpha_beta_search(self, state):
         """Implements the alpha-beta pruning algorithm to find the best action.
@@ -90,17 +89,15 @@ class AlphaBetaAgent(Agent):
             return self.eval(state), None
         value = -float("inf")
         best_action = None
-        for action in state.get_actions():
-            child = state.apply_action(action)
-            v, _ = self.min_value(child, alpha, beta, depth + 1)
-            if v > value:
-                value = v
+        for action in self.game.actions(state):
+            child,best_action = self.min_value(self.game.result(state, action), alpha, beta, depth + 1)
+            if child > value:
+                value = child
                 best_action = action
+                alpha = max(alpha, value)
             if value >= beta:
                 return value, best_action
-            alpha = max(alpha, value)
         return value, best_action
-
 
     def min_value(self, state, alpha, beta, depth):
         """Computes the minimum achievable value for the opposing player at a given state using the alpha-beta pruning.
@@ -123,13 +120,12 @@ class AlphaBetaAgent(Agent):
             return self.eval(state), None
         value = float("inf")
         best_action = None
-        for action in state.get_actions():
-            child = state.apply_action(action)
-            v, _ = self.max_value(child, alpha, beta, depth + 1)
-            if v < value:
-                value = v
+        for action in self.game.actions(state):
+            child,best_action = self.max_value(self.game.result(state, action), alpha, beta, depth + 1)
+            if child < value:
+                value = child
                 best_action = action
+                beta = min(beta, value)
             if value <= alpha:
                 return value, best_action
-            beta = min(beta, value)
         return value, best_action
