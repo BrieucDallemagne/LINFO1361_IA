@@ -131,7 +131,7 @@ class UCTAgent(Agent):
                 maximum = ucb
                 selected = child
         
-        return selected 
+        return self.select(selected) 
     
     def expand(self, node):
         """Expands a node by adding a child node to the tree for an unexplored action.
@@ -205,15 +205,11 @@ class UCTAgent(Agent):
         
         # Update the node statistics
         node.N += 1
-        node.U += result
-        
-        # Alternate between 0 and 1
         if result == 1:
-            result = 0
-        else:
-            result = 1
+            node.U += 1
         
-        self.back_propagate(result, node.parent)
+        
+        self.back_propagate(-result, node.parent)
         
 
     def UCB1(self, node):
