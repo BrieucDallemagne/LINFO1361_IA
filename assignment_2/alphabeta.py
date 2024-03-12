@@ -1,4 +1,5 @@
 from agent import Agent
+
 class AlphaBetaAgent(Agent):
     """An agent that uses the alpha-beta pruning algorithm to determine the best move.
 
@@ -44,7 +45,7 @@ class AlphaBetaAgent(Agent):
         Returns:
             bool: True if the search should be cut off, False otherwise.
         """
-        return state.is_terminal() or depth >= self.max_depth
+        return depth >= self.max_depth or self.game.is_terminal(state)
     
     def eval(self, state):
         """Evaluates the given state and returns a score from the perspective of the agent's player.
@@ -54,8 +55,18 @@ class AlphaBetaAgent(Agent):
 
         Returns:
             float: The evaluated score of the state.
+
         """
-        return state.utility(self.player) - state.utility(1-self.player)
+        joueur = self.player
+        adversaire = 1 - self.player
+        min_joueur = 10
+        min_adversaire = 10
+        for board in state.board:
+            min_joueur = min(min_joueur, len(board[self.player]))
+            min_adversaire = min(min_adversaire, len(board[adversaire]))
+        return  min_joueur - min_adversaire
+
+
 
     def alpha_beta_search(self, state):
         """Implements the alpha-beta pruning algorithm to find the best action.
@@ -90,14 +101,15 @@ class AlphaBetaAgent(Agent):
         value = -float("inf")
         best_action = None
         for action in self.game.actions(state):
-            child,best_action = self.min_value(self.game.result(state, action), alpha, beta, depth + 1)
-            if child > value:
-                value = child
+            value2, action2 = self.min_value(self.game.result(state, action), alpha, beta, depth + 1)
+            if value2 > value:
+                value = value2
                 best_action = action
-                alpha = max(alpha, value)
             if value >= beta:
-                return value, best_action
+                beta = value
         return value, best_action
+        
+
 
     def min_value(self, state, alpha, beta, depth):
         """Computes the minimum achievable value for the opposing player at a given state using the alpha-beta pruning.
@@ -121,11 +133,10 @@ class AlphaBetaAgent(Agent):
         value = float("inf")
         best_action = None
         for action in self.game.actions(state):
-            child,best_action = self.max_value(self.game.result(state, action), alpha, beta, depth + 1)
-            if child < value:
-                value = child
+            value2, action2 = self.max_value(self.game.result(state, action), alpha, beta, depth + 1)
+            if value2 < value:
+                value = value2
                 best_action = action
-                beta = min(beta, value)
             if value <= alpha:
-                return value, best_action
+                alpha = value
         return value, best_action
