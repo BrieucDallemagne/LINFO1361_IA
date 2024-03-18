@@ -133,6 +133,20 @@ class AI(Agent):
         
         return self.select(selected) 
     
+    def choice(self, current_state, unexplored_actions):
+        """Select the best action in a set of unexplored actions according to various rules
+
+        Args:
+            unexplored_actions (list of State): the set of possible actions to choose from
+            
+        Returns:
+            State: the selected action
+        """
+        # Here we could use either some heuristic or use a ML to do the job
+        # Perhaps gradient boosting ?
+        
+        return random.choice(unexplored_actions)
+    
     def expand(self, node):
         """Expands a node by adding a child node to the tree for an unexplored action.
 
@@ -158,7 +172,7 @@ class AI(Agent):
         
         # Select a random unexplored action
         # We can definitely do better by setting up a better selection algorithm
-        child = random.choice(unexplored_actions)
+        child = self.choice(node.state, unexplored_actions)
         
         # Initialize the children of the child node
         child.children = { Node(child, self.game.result(child.state, action)): action for action in self.game.actions(child.state) }
