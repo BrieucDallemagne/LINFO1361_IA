@@ -32,3 +32,7 @@ and you can use this command to replay this game from the 42nd turn with a delay
 
 > python3 main.py -r logs.txt -dt 1 -st 42
 
+
+## Idée
+
+Utiliser alphazero
