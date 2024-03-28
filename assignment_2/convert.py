@@ -28,24 +28,37 @@ def which_board(origin):
     In our games boards are like this:
     2 3
     0 1
+    ON VA INVERSER LES TABLEAUX NSM
     """
     x = origin["x"]
     y = origin["y"]
     
-    if y > 3:
+    if y < 4:
         if x < 4:
-            return 0
-        else:
-            return 1
+            return 3
+        else :
+            return 2
     else:
         if x < 4:
-            return 2
+            return 1
         else:
-            return 3
+            return 0
    
 def which_stones(origin):
-    # this is where things get tricky
-    return -1
+    """
+        Position Indexing on each board:
+         12 | 13 | 14 | 15
+        -------------------
+          8 |  9 | 10 | 11
+        -------------------
+          4 |  5 |  6 |  7
+        -------------------
+          0 |  1 |  2 |  3
+    """
+    x = origin["x"]%4
+    y = origin["y"]%4
+    
+    return 15 - 4*(y) - 3 + x
     
 def direction(heading):
     """
@@ -58,28 +71,22 @@ def direction(heading):
     x = heading["x"]
     y = heading["y"]
     
-    if x < 0:
-        # go left
-        if y < 0:
+    if y > 0:
+        if x < 0:
             return -5
-        elif y == 0:
-            return -1
-        else:
-            return 3
-    elif x == 0:
-        # go up or down
-        if y < 0:
-            return -4
-        else:
-            return 4
-    else:
-        # go right
-        if y < 0:
+        elif x > 0:
             return -3
-        elif y == 0:
-            return 1
-        else:
+        return -4
+    elif y < 0:
+        if x < 0:
+            return 3
+        elif x > 0:
             return 5
+        return 4
+    else:
+        if x < 0:
+            return -1
+        return 1 
 
 def length(heading):
     return max(abs(heading["x"]), abs(heading["y"]))
@@ -104,15 +111,6 @@ if os.path.exists(output_path):
 os.mkdir(output_path)
 os.mkdir(output_path+"/black")
 os.mkdir(output_path+"/white")
-
-
-for filename in files_black:
-    with open(input_path+"/black/"+filename) as f:
-        data = json.load(f)
-        
-        turn_begin = data["game_states"][0]["turn"]
-        
-        print(turn_begin)
         
 for filename in files_white:
     with open(input_path+"/white/"+filename) as f:
@@ -121,7 +119,19 @@ for filename in files_white:
         turn_begin = data["game_states"][0]["turn"]
         moveset = data["turns"]
         
+        #Inverting color (not a mistake) because of the flipped board
+        with open(output_path+"/black/"+"".join(filename.split(".")[:-1])+".txt", "w") as out:
+            for i, move in enumerate(moveset):
+                out.write(f"{i}:{which_board(move['passive']['origin'])}:{which_stones(move['passive']['origin'])}:{which_board(move['aggressive']['origin'])}:{which_stones(move['aggressive']['origin'])}:{direction(move['aggressive']['heading'])}:{length(move['aggressive']['heading'])}\n")
+
+for filename in files_black:
+    with open(input_path+"/black/"+filename) as f:
+        data = json.load(f)
+        
+        turn_begin = data["game_states"][0]["turn"]
+        moveset = data["turns"]
+        
+        #Inverting color (not a mistake) because of the flipped board
         with open(output_path+"/white/"+"".join(filename.split(".")[:-1])+".txt", "w") as out:
             for i, move in enumerate(moveset):
-                print(move["aggressive"])
-                out.write(f"{i}:{which_board(move['aggressive']['origin'])}:{which_stones(move['aggressive']['origin'])}:{which_board(move['aggressive']['heading'])}:{which_stones(move['aggressive']['heading'])}:{direction(move['aggressive']['heading'])}:{length(move['aggressive']['heading'])}\n")
+                out.write(f"{i}:{which_board(move['passive']['origin'])}:{which_stones(move['passive']['origin'])}:{which_board(move['aggressive']['origin'])}:{which_stones(move['aggressive']['origin'])}:{direction(move['aggressive']['heading'])}:{length(move['aggressive']['heading'])}\n")
