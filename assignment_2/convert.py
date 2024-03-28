@@ -7,6 +7,7 @@ import json
 import argparse
 import os
 import shutil
+import time
 
 def which_board(origin):
     """
@@ -95,23 +96,28 @@ def length(heading):
 parser = argparse.ArgumentParser(description="Convert the shobu dataset to the standard output of the MCTS algorithm.")
 parser.add_argument("input", type=str, help="The path to the input folder.")
 parser.add_argument("output", type=str, help="The path to the output folder.")
+# add an optional time limit of files to read
+parser.add_argument("--limit", type=int, help="The number of files to read.")
 
 # parse the arguments
 args = parser.parse_args()
 input_path = args.input
 output_path = args.output
+print("[LOG]: Parsed arguments")
 
 # read all json files one by one
 files_black = os.listdir(input_path+"/black") 
 files_white = os.listdir(input_path+"/white")
 
 # Create the output folder
+print(f"[LOG]: Creating output folder @ {output_path}")
 if os.path.exists(output_path):
     shutil.rmtree(output_path)
 os.mkdir(output_path)
 os.mkdir(output_path+"/black")
 os.mkdir(output_path+"/white")
-        
+
+print("[LOG]: Starting conversion for white")
 for filename in files_white:
     with open(input_path+"/white/"+filename) as f:
         data = json.load(f)
@@ -124,6 +130,9 @@ for filename in files_white:
             for i, move in enumerate(moveset):
                 out.write(f"{i}:{which_board(move['passive']['origin'])}:{which_stones(move['passive']['origin'])}:{which_board(move['aggressive']['origin'])}:{which_stones(move['aggressive']['origin'])}:{direction(move['aggressive']['heading'])}:{length(move['aggressive']['heading'])}\n")
 
+print("[LOG]: Finished conversion for white")
+print("[LOG]: Starting conversion for black")
+
 for filename in files_black:
     with open(input_path+"/black/"+filename) as f:
         data = json.load(f)
@@ -135,3 +144,6 @@ for filename in files_black:
         with open(output_path+"/white/"+"".join(filename.split(".")[:-1])+".txt", "w") as out:
             for i, move in enumerate(moveset):
                 out.write(f"{i}:{which_board(move['passive']['origin'])}:{which_stones(move['passive']['origin'])}:{which_board(move['aggressive']['origin'])}:{which_stones(move['aggressive']['origin'])}:{direction(move['aggressive']['heading'])}:{length(move['aggressive']['heading'])}\n")
+
+print("[LOG]: Finished conversion for black")
+print("[LOG]: Conversion finished")
