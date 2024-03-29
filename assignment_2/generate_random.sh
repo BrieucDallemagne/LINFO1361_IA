@@ -37,4 +37,4 @@ for i in $(seq 1 $1); do
 done
 
 zip -r $2.zip $2
-echo $2 > ../.gitignore
+echo $2 >> ../.gitignore
