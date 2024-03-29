@@ -7,7 +7,6 @@ import json
 import argparse
 import os
 import shutil
-import time
 
 def which_board(origin):
     """
