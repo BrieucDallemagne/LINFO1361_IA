@@ -35,3 +35,6 @@ for i in $(seq 1 $1); do
         mv $2/game_$i.txt $2/white
     fi
 done
+
+zip -r $2.zip $2
+echo $2 > ../.gitignore
