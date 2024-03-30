@@ -115,6 +115,8 @@ def replay_game(actions, delay_time=0.0, display=True, start_turn=0):
         init_pygame()
     
     for action, n_move in actions:
+        print(action)
+        print(state)
         if action is not None:
             if n_move >= start_turn:
                 state = game.result(state, action)

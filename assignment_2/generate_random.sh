@@ -37,6 +37,7 @@ for i in $(seq 1 $1); do
 done
 
 zip -r $2.zip $2
+mv $2.zip training_zip
 
 # Add the output folder to the .gitignore file and check if it is already in the file
 grep -w $2 ../.gitignore > /dev/null
