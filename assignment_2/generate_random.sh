@@ -21,6 +21,10 @@ mkdir $2
 mkdir $2/white
 mkdir $2/black
 mkdir $2/draw
+mkdir $2/numpy
+mkdir $2/numpy/white
+mkdir $2/numpy/black
+mkdir $2/numpy/draw
 
 # Generate the random amount of games
 for i in $(seq 1 $1); do
