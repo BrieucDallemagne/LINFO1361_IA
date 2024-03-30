@@ -9,3 +9,7 @@ thomas_test10000
 output_random
 output_random10
 numpy_test
+output_100000.zip
+output_100000
+test_windows
+.venv
