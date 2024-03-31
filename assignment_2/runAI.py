@@ -13,10 +13,10 @@ model = Sequential([
     Dense(1, activation='sigmoid')
 ])
 
-model.compile(optimizer='adam', loss="binary_crossentropy" , metrics=['accuracy'])
+#model.compile(optimizer='adam', loss="binary_crossentropy" , metrics=['accuracy'])
 
 
-model.load_weights("shobu_model_big.keras")
+model.load_weights("shobu_model_binary.keras")
 
 for i,weight in enumerate(model.weights):
     print(weight.shape)
@@ -29,7 +29,7 @@ count = 0
 bad = 0
 
 
-for file in files[10:]:
+for file in files:
     data = np.load(folder+"/"+file)
     res = model.predict(data)
     x = np.linspace(0, 1, len(res))

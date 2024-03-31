@@ -3,6 +3,7 @@ import random
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
@@ -214,24 +215,26 @@ class AI(Agent):
         player (int): The player id this agent represents.
         game (ShobuGame): The game the agent is playing.
     """
-    def __init__(self, player, game):
+    def __init__(self, player, game, debugging=False):
         super().__init__(player, game)
         self.i = 0
+        self.debugging = debugging
         
-        plt.ion()
-        self.fig = plt.figure()
-        self.ax = self.fig.add_subplot(111)
-        self.x = [0]
-        self.y = [0]
-        self.line1, = self.ax.plot(self.x, self.y)
-        
-        # setting labels
-        plt.xlabel("X-axis")
-        plt.ylabel("Y-axis")
-        plt.title(f"Our basic AI playing for {self.player}")
-        plt.xlim(0, 40)
-        plt.grid()
-        plt.ylim(0, 1)
+        if debugging:                
+            plt.ion()
+            self.fig = plt.figure()
+            self.ax = self.fig.add_subplot(111)
+            self.x = [0]
+            self.y = [0]
+            self.line1, = self.ax.plot(self.x, self.y)
+            
+            # setting labels
+            plt.xlabel("X-axis")
+            plt.ylabel("Y-axis")
+            plt.title(f"Our basic AI playing for {self.player}")
+            plt.xlim(0, 40)
+            plt.grid()
+            plt.ylim(0, 1)
 
     def play(self, state, remaining_time):
         """Determines the next action to take in the given state.
@@ -246,8 +249,14 @@ class AI(Agent):
         possible_actions = self.game.actions(state)
         value_actions = []
         self.i += 1
+        duration = 0
+        start = time.time()
         
         for action in possible_actions:
+            # 10% of the remaining time to be careful
+            if duration * 1.1 > remaining_time:
+                break
+            
             new_state = self.game.result(state, action)
             
             if self.game.is_terminal(new_state):
@@ -257,6 +266,11 @@ class AI(Agent):
             numpy_state = convert_to_numpy(new_state)
             value = model.predict(numpy_state)
             value_actions.append(value)
+            duration = time.time() - start
+        
+        if len(value_actions) == 0:
+            # In case we didn't have time to even compute 1 action
+            value_actions = [0]
         
         # Choose the action with the highest value
         # We are playing black and AI was trained to play black
@@ -265,18 +279,19 @@ class AI(Agent):
         value_actions = np.array(value_actions)
         best_action = possible_actions[np.argmax(value_actions)]
         
-        # Update the plot
-        self.x.append(self.i)
-        self.y.append(np.max(value_actions))
-        
-        self.line1.set_xdata(self.x)
-        self.line1.set_ydata(self.y)
-        
-        # re-drawing the figure
-        self.fig.canvas.draw()
-        
-        # to flush the GUI events
-        self.fig.canvas.flush_events()
+        if self.debugging:
+            # Update the plot
+            self.x.append(self.i)
+            self.y.append(np.max(value_actions))
+            
+            self.line1.set_xdata(self.x)
+            self.line1.set_ydata(self.y)
+            
+            # re-drawing the figure
+            self.fig.canvas.draw()
+            
+            # to flush the GUI events
+            self.fig.canvas.flush_events()
         
         return best_action        
 

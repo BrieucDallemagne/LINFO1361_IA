@@ -22,7 +22,7 @@ def get_agents(args, display):
         elif agent_name == "mcts":
             return UCTAgent(player, ShobuGame(), 1000)
         elif agent_name == "agent":
-            return AI(player, ShobuGame())
+            return AI(player, ShobuGame(), debugging=True)
         else:
             raise Exception(f"Invalid player: {agent_name}")
     

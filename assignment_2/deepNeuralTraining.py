@@ -84,15 +84,19 @@ if not load:
     np.save("X.npy", X)
     np.save("Y.npy", Y)
 else:
-    X = np.load("X.npy")
-    Y = np.load("Y.npy")
-    
+    X = np.load("X_big.npy")
+    Y = np.load("Y_big.npy")
+
+# Don't want the draw games
+finish_draw = np.max(np.argwhere(Y == 0.5))
+X = X[finish_draw:]
+Y = Y[finish_draw:]
     
 model.fit(X, Y, epochs=10, batch_size=32)
 
 
 # Saving the model
-model.save("shobu_model.keras")
+model.save("shobu_model_binary.keras")
 
 # Testing the model
 # Example with a white win
