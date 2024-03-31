@@ -10,9 +10,9 @@ from interface import *
 import argparse
 import time
 
-def get_agents(args, display):
+def get_agents(args, display, debugging=False):
 
-    def get_agent(player, agent_name):
+    def get_agent(player, agent_name, debugging=False):
         if agent_name == "human":
             return HumanAgent(player)
         elif agent_name == "random":
@@ -22,14 +22,14 @@ def get_agents(args, display):
         elif agent_name == "mcts":
             return UCTAgent(player, ShobuGame(), 1000)
         elif agent_name == "agent":
-            return AI(player, ShobuGame(), debugging=True)
+            return AI(player, ShobuGame(), debugging=debugging)
         else:
             raise Exception(f"Invalid player: {agent_name}")
     
     if not display and (args.white == "human" or args.black == "human"):
         raise Exception("Cannot have human player without display")
     
-    return get_agent(0, args.white), get_agent(1, args.black)
+    return get_agent(0, args.white, debugging), get_agent(1, args.black, debugging)
 
 def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
 
@@ -138,6 +138,7 @@ if __name__ == "__main__":
     parser.add_argument('-r', '--replay', type=str, default=None, help='Path to log file to replay the game')
     parser.add_argument('-st', '--start_turn', type=int, default=0, help='Start turn for replaying the game')
     parser.add_argument('-n', '--n', type=int, default=1, help='Run N games and report stats')
+    parser.add_argument("--debug", type=bool, default=False, help="Debugging mode")
     args = parser.parse_args()
 
     if args.replay is not None:
@@ -150,7 +151,7 @@ if __name__ == "__main__":
             -1: 0
         }
         total_moves = []
-        agent_white, agent_black = get_agents(args, args.display)
+        agent_white, agent_black = get_agents(args, args.display, args.debug)
         for i in range(0, args.n):
             if i % 25 == 0 and i > 0:
                 print(f"{i} -> White : {winners[0] / (i+1)}, Black : {winners[1] / (i+1)}, Draw : {winners[-1] / (i+1)}, mean numer of moves : {sum(total_moves) / len(total_moves)}")
@@ -161,6 +162,6 @@ if __name__ == "__main__":
         print(f" White : {winners[0] / args.n}, Black : {winners[1] / args.n}, Draw : {winners[-1] / args.n}, mean numer of moves : {sum(total_moves) / len(total_moves)}")
     else:
         log_file = args.logs
-        agent_white, agent_black = get_agents(args, args.display)
+        agent_white, agent_black = get_agents(args, args.display, args.debug)
         winner, n_moves = main(agent_white, agent_black, display=args.display, log_file=log_file, play_time=args.time)
         print(f"Winner: {winner}, n_moves: {n_moves}")
