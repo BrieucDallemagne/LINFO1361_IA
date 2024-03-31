@@ -24,7 +24,7 @@ count = 0
 bad = 0
 
 
-for file in files:
+for file in files[10:]:
     data = np.load(folder+"/"+file)
     res = model.predict(data)
     x = np.linspace(0, 1, len(res))
@@ -35,6 +35,12 @@ for file in files:
         plt.plot(1, res[-1], 'ro')
         bad += 1
     count += 1
+
+plt.title("Évolution de la probabilité de victoire du joueur noir au cours de la partie")
+plt.grid()
+plt.ylabel("Probabilité de victoire")
+plt.xlabel("Numéro du coup")
+plt.grid()
 
 plt.ylim(0,1)
 # Draw horizontal line at 0.5

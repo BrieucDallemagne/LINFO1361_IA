@@ -13,5 +13,4 @@ output_100000.zip
 output_100000
 test_windows
 .venv
-X.npy 
-Y.npy
+*.npy
