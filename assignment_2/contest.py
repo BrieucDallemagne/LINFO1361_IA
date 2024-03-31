@@ -4,9 +4,28 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import os
+import warnings
+
+# ------------ tackle some noisy warning
+def warn(*args, **kwargs):
+    pass
+warnings.warn = warn
+warnings.simplefilter(action="ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category = DeprecationWarning)
+
+'''
+TF_CPP_MIN_LOG_LEVEL = 0 to all logs .
+TF_CPP_MIN_LOG_LEVEL = 1 to filter out INFO logs 
+TF_CPP_MIN_LOG_LEVEL = 2 to additionall filter out WARNING 
+TF_CPP_MIN_LOG_LEVEL = 3 to additionally filter out ERROR.
+'''
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
+
 
 WEIGHT1 = np.array([[1.391957849264144897e-01,7.938511371612548828e-01,5.405380725860595703e-01,-8.127994537353515625e-01,3.429547324776649475e-02,-6.969232857227325439e-02,-2.939802408218383789e-01,-1.997222751379013062e-01,2.974384725093841553e-01,4.603224396705627441e-01,1.690422594547271729e-01,5.662263035774230957e-01,-2.224843651056289673e-01,-2.014883607625961304e-01,2.677792916074395180e-03,1.666431576013565063e-01,6.198672652244567871e-01,-1.170891374349594116e-01,-2.342341393232345581e-01,6.509296298027038574e-01,2.008105516433715820e+00,1.502924561500549316e-01,1.694446444511413574e+00,-1.435802727937698364e-01,4.192330241203308105e-01,-1.966393887996673584e-01],
 [-3.689894378185272217e-01,1.840692758560180664e-01,-3.373371437191963196e-02,-4.983517825603485107e-01,-4.872979223728179932e-01,4.740262925624847412e-01,-3.025706112384796143e-01,-1.083513721823692322e-01,8.384078741073608398e-01,1.637217998504638672e-01,-1.573665440082550049e-01,5.921074748039245605e-01,4.271294921636581421e-02,2.011477202177047729e-01,-2.093340158462524414e-01,3.249661624431610107e-02,3.659174740314483643e-01,5.585270524024963379e-01,-7.262575626373291016e-01,3.324770629405975342e-01,1.989136219024658203e+00,2.840320765972137451e-01,3.531296491622924805e+00,-7.041013985872268677e-02,-1.950852775573730469e+01,-6.624210625886917114e-02],
@@ -260,7 +279,7 @@ class AI(Agent):
         
         for action in possible_actions:
             # 10% of the remaining time to be careful
-            if duration * 1.1 > remaining_time:
+            if duration * 10 > remaining_time:
                 break
             
             new_state = self.game.result(state, action)
@@ -273,7 +292,7 @@ class AI(Agent):
             numpy_state = np.append(numpy_state, turn)
             numpy_state = numpy_state.reshape(1, -1)
             
-            value = model.predict(numpy_state)
+            value = model.predict(numpy_state, verbose=0)
             value_actions.append(value)
             duration = time.time() - start
         
