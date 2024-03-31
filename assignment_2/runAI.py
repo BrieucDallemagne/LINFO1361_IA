@@ -18,6 +18,11 @@ model.compile(optimizer='adam', loss="binary_crossentropy" , metrics=['accuracy'
 
 model.load_weights("shobu_model_big.keras")
 
+for i,weight in enumerate(model.weights):
+    print(weight.shape)
+    print(weight.numpy())
+    #np.savetxt(f"weights/w{i}.txt", weight.numpy(), delimiter=",")
+
 folder = "output_random100/numpy/black"
 files = os.listdir(folder)
 count = 0
