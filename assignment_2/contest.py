@@ -239,6 +239,7 @@ class AI(Agent):
         super().__init__(player, game)
         self.i = 0
         self.offset = 0
+        self.lastvalue = 0.5
         if self.player == 1:
             self.offset = 1
         
@@ -291,8 +292,21 @@ class AI(Agent):
             numpy_state = convert_to_numpy(new_state)
             numpy_state = np.append(numpy_state, turn)
             numpy_state = numpy_state.reshape(1, -1)
+
+            value_neural = model.predict(numpy_state, verbose=0)
+
+            value_heuristic = self.heuristic(new_state) 
             
-            value = model.predict(numpy_state, verbose=0)
+            value = value_neural*0.5 + value_heuristic*0.5
+            #print(f"Value neural: {value_neural}, Value heuristic: {value_heuristic}, Value: {value}")
+            if self.player == 1:
+                if value*0.9 > self.lastvalue:
+                    self.lastvalue = value
+                    return action
+            if self.player == 0:
+                if value*1.1 < self.lastvalue:
+                    self.lastvalue = value
+                    return action
             value_actions.append(value)
             duration = time.time() - start
         
@@ -321,7 +335,75 @@ class AI(Agent):
             # to flush the GUI events
             self.fig.canvas.flush_events()
         
-        return best_action        
+        return best_action
+
+    def heuristic(self, state):
+        """Computes a heuristic value for the given state.
+
+        Args:
+            state (ShobuState): The state to evaluate.
+
+        Returns:
+            float: The heuristic value of the state.
+        """
+        
+        def lost(state):
+            possible_actions = self.game.actions(state)
+            for action in possible_actions:
+                new_state = self.game.result(state, action)
+                if self.game.is_terminal(new_state):
+                    return True
+            return False
+        
+    
+
+        def count_min_pieces(self, state):
+            """Evaluates the given state and returns a score from the perspective of the agent's player.
+
+            Args:
+                state (ShobuState): The game state to evaluate.
+
+            Returns:
+                float: The evaluated score of the state.
+            """
+            joueur = self.player
+            adversaire = 1 - self.player
+            min_joueur = 10
+            min_adversaire = 10
+            for board in state.board:
+                min_joueur = min(min_joueur, len(board[self.player]))
+                min_adversaire = min(min_adversaire, len(board[adversaire]))
+            return  (((min_joueur - min_adversaire)/(min_joueur + min_adversaire)) + 1)/2
+
+        def count_pieces(self, state):
+            """Evaluates the given state and returns a score from the perspective of the agent's player.
+
+            Args:
+                state (ShobuState): The game state to evaluate.
+
+            Returns:
+                float: The evaluated score of the state.
+            """
+            joueur = self.player
+            adversaire = 1 - self.player
+            joueur_score = 0
+            adversaire_score = 0
+            for board in state.board:
+                joueur_score += len(board[self.player])
+                adversaire_score += len(board[adversaire])
+            return  (((joueur_score - adversaire_score)/(joueur_score + adversaire_score)) + 1)/2 
+
+                   
+        if lost(state):
+            return 1 - self.player
+    
+        if self.player != 1:
+            toreturn =  1 - (0.2*count_pieces(self, state) + 0.8*count_min_pieces(self, state))
+        else:
+            toreturn = 0.2*count_pieces(self, state) + 0.8*count_min_pieces(self, state)
+
+        return toreturn
+
 
 class AI_2(Agent):
     """An agent that plays following your algorithm.
