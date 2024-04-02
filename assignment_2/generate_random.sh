@@ -29,7 +29,7 @@ mkdir $2/numpy/draw
 # Generate the random amount of games
 for i in $(seq 1 $1); do
     # get who won the game
-    winner=$(python main.py -w random -b random -t 60 -l $2/game_$i.txt | grep Winner | awk '{print $2}' | tr -d ',')
+    winner=$(python main.py -w random -b alphabeta -t 60 -l $2/game_$i.txt | grep Winner | awk '{print $2}' | tr -d ',')
     # move the log file to the proper folder
     if [ "$winner" -eq 1 ] ; then
         mv $2/game_$i.txt $2/black

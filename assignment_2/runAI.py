@@ -48,7 +48,6 @@ plt.title("Évolution de la probabilité de victoire du joueur noir au cours de 
 plt.grid()
 plt.ylabel("Probabilité de victoire")
 plt.xlabel("Numéro du coup")
-plt.grid()
 
 plt.ylim(0,1)
 # Draw horizontal line at 0.5
