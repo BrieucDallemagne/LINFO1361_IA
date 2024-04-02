@@ -226,7 +226,7 @@ class Node:
         self.N = 0
         self.children = {}
         
-class AI(Agent):
+class AI2(Agent):
     """An agent that plays following your algorithm.
 
     This agent extends the base Agent class, providing an implementation your agent.
@@ -240,6 +240,8 @@ class AI(Agent):
         self.i = 0
         self.offset = 0
         self.lastvalue = 0.5
+        self.coup = 0
+        self.max_depth = 3
         if self.player == 1:
             self.offset = 1
         
@@ -276,18 +278,26 @@ class AI(Agent):
         turn = self.i*2 + self.offset
         self.i += 1
         duration = 0
-        start = time.time()
-        
+        #start = time.time()
+
+        val, action = self.max_value(state, -float("inf"), float("inf"), 0)
+        print(val)
+        return action
+
         for action in possible_actions:
+
+            #if self.coup == 0 and self.player == 0  and action == (0,0,1,0,5,1):
+            #    self.coup = 1
+            #    return action
+
             # 10% of the remaining time to be careful
             if duration * 10 > remaining_time:
                 break
             
             new_state = self.game.result(state, action)
-            
+
             if self.game.is_terminal(new_state):
-                # Don't waste time if it's a guaranteed win
-                return action 
+                return action
             
             numpy_state = convert_to_numpy(new_state)
             numpy_state = np.append(numpy_state, turn)
@@ -295,10 +305,11 @@ class AI(Agent):
 
             value_neural = model.predict(numpy_state, verbose=0)
 
-            value_heuristic = self.heuristic(new_state) 
+            value_heuristic = self.evaluate(new_state) 
+            print(value_heuristic)
             
-            value = value_neural*0.5 + value_heuristic*0.5
-            #print(f"Value neural: {value_neural}, Value heuristic: {value_heuristic}, Value: {value}")
+            value = 0.1*value_neural + 0.9*value_heuristic
+            
             if self.player == 1:
                 if value*0.9 > self.lastvalue:
                     self.lastvalue = value
@@ -337,7 +348,7 @@ class AI(Agent):
         
         return best_action
 
-    def heuristic(self, state):
+    def evaluate(self, state):
         """Computes a heuristic value for the given state.
 
         Args:
@@ -373,6 +384,10 @@ class AI(Agent):
             for board in state.board:
                 min_joueur = min(min_joueur, len(board[self.player]))
                 min_adversaire = min(min_adversaire, len(board[adversaire]))
+
+            if min_adversaire == 0:
+                return self.player
+            
             return  (((min_joueur - min_adversaire)/(min_joueur + min_adversaire)) + 1)/2
 
         def count_pieces(self, state):
@@ -404,215 +419,137 @@ class AI(Agent):
 
         return toreturn
 
-
-class AI_2(Agent):
-    """An agent that plays following your algorithm.
-
-    This agent extends the base Agent class, providing an implementation your agent.
-
-    Attributes:
-        player (int): The player id this agent represents.
-        game (ShobuGame): The game the agent is playing.
-    """
     
-    def __init__(self, player, game, iteration=100):
-        """Initializes a UCTAgent with a specified player, game, and number of iterations.
+class AI(Agent):
 
-        Args:
-            player (int): The player id this agent represents.
-            game (ShobuGame): The game the agent is playing.
-            iteration (int): The number of simulations to perform in the UCT algorithm.
-        """
+
+    def __init__(self, player, game, debugging=False):
+
         super().__init__(player, game)
-        self.iteration = iteration
+        self.i = 0
+        self.offset = 0
+        self.lastvalue = 0.5
+        self.coup = 0
+        self.max_depth = 2
+        if self.player == 1:
+            self.offset = 1
+        
+        self.debugging = debugging
+        
+        if debugging:                
+            plt.ion()
+            self.fig = plt.figure()
+            self.ax = self.fig.add_subplot(111)
+            self.x = [0]
+            self.y = [0]
+            self.line1, = self.ax.plot(self.x, self.y)
+            
+            # setting labels
+            plt.xlabel("X-axis")
+            plt.ylabel("Y-axis")
+            plt.title(f"Our basic AI playing for {self.player}")
+            plt.xlim(0, 40)
+            plt.grid()
+            plt.ylim(0, 1)
 
     def play(self, state, remaining_time):
-        """Determines the next action to take in the given state.
 
-        Args:
-            state (ShobuState): The current state of the game.
-            remaining_time (float): The remaining time in seconds that the agent has to make a decision.
+        possible_actions = self.game.actions(state)
+        for action in possible_actions:
+            new = self.game.result(state, action)
+            if self.game.is_terminal(new):
+                return action
 
-        Returns:
-            ShobuAction: The chosen action.
-        """
-        return self.uct(state)
-
-    def uct(self, state):
-        """Executes the UCT algorithm to find the best action from the current state.
-
-        Args:
-            state (ShobuState): The current state of the game.
-
-        Returns:
-            ShobuAction: The action leading to the best-perceived outcome based on UCT algorithm.
-        """
-        root = Node(None, state)
-        root.children = { Node(root, self.game.result(root.state, action)): action for action in self.game.actions(root.state) }
-        for _ in range(self.iteration):
-            leaf = self.select(root)
-            child = self.expand(leaf)
-            result = self.simulate(child.state)
-            
-            #print(f"For palayer {self.player}, the result is {result}")
-            
-            self.back_propagate(result, child)
-        #print(root.N, root.U)    
-        
-        max_state = max(root.children, key=lambda n: n.N)
-        return root.children.get(max_state)
+        return self.alpha_beta_search(state)
     
-    def isLeaf(self, node):
-        """
-        A leaf is either a node in a terminal state, 
-        or a node with a child for which no simulation has yet been performed.
+    def is_cutoff(self, state, depth):
 
-        Args:
-            node (Node): the node to check
-        Returns:
-            bool: True if the node is a leaf, False otherwise
-        """
-        if self.game.is_terminal(node.state):
-            return True 
-
-        for child in node.children:
-            if child.N == 0:
-                return True
-
-        return False
-        
-    def select(self, node):
-        """Selects a leaf node using the UCB1 formula to maximize exploration and exploitation.
-
-        The function recursively selects the children of the node that maximise the UCB1 score, exploring the most promising 
-        path in the game tree. It stops when a leaf is found and returns it. A leaf is either a node in a terminal state, 
-        or a node with a child for which no simulation has yet been performed.
-        
-        Args:
-            node (Node): The node to select from.
-
-        Returns:
-            Node: The selected leaf node.
-        """
-        
-        if self.isLeaf(node):
-            return node
-        
-        maximum = float('-inf')
-        selected = None
-        
-        for child in node.children:
-            ucb = self.UCB1(child)
-            if ucb > maximum:
-                maximum = ucb
-                selected = child
-        
-        return self.select(selected) 
+        return depth >= self.max_depth or self.game.is_terminal(state)
     
-    def choice(self, current_state, unexplored_actions):
-        """Select the best action in a set of unexplored actions according to various rules
+    def eval(self, state):
+        
+        def lost(state):
+            possible_actions = self.game.actions(state)
+            for action in possible_actions:
+                new_state = self.game.result(state, action)
+                if self.game.is_terminal(new_state):
+                    return True
+            return False
+        
+    
 
-        Args:
-            unexplored_actions (list of State): the set of possible actions to choose from
+        def count_min_pieces(self, state):
+
+            joueur = self.player
+            adversaire = 1 - self.player
+            min_joueur = 10
+            min_adversaire = 10
+            for board in state.board:
+                min_joueur = min(min_joueur, len(board[self.player]))
+                min_adversaire = min(min_adversaire, len(board[adversaire]))
+
+            if min_adversaire == 0:
+                return self.player
             
-        Returns:
-            State: the selected action
-        """
-        # Here we could use either some heuristic or use a ML to do the job
-        # Perhaps gradient boosting ?
-        
-        return random.choice(unexplored_actions)
+            return  (((min_joueur - min_adversaire)/(min_joueur + min_adversaire)) + 1)/2
+
+        def count_pieces(self, state):
+
+            joueur = self.player
+            adversaire = 1 - self.player
+            joueur_score = 0
+            adversaire_score = 0
+            for board in state.board:
+                joueur_score += len(board[self.player])
+                adversaire_score += len(board[adversaire])
+            return  (((joueur_score - adversaire_score)/(joueur_score + adversaire_score)) + 1)/2 
+
+                   
+        if lost(state):
+            return -100
     
-    def expand(self, node):
-        """Expands a node by adding a child node to the tree for an unexplored action.
 
-        The function returns one of the children of the node for which no simulation has yet been performed. 
-        In addition, the function must initialize all the children of that child node in the child's "children" dictionary. 
-        If the node is in a terminal state, the function returns itself, indicating that the node can no longer be expanded.
+        toreturn = 0.2*count_pieces(self, state) + 0.8*count_min_pieces(self, state)
 
-        Args:
-            node (Node): The node to expand. This node represents the current state from which we want to explore possible actions.
+        return toreturn
 
-        Returns:
-            Node: The child node selected. If the node is at a terminal state, the node itself is returned.
-        """
-        # Check if it's a terminal state
-        if self.game.is_terminal(node.state):
-            return node
-        
-        # Check if there are unexplored actions
-        unexplored_actions = []
-        for child in node.children:
-            if child.N == 0:
-                unexplored_actions.append(child)
-        
-        # Select a random unexplored action
-        # We can definitely do better by setting up a better selection algorithm
-        child = self.choice(node.state, unexplored_actions)
-        
-        # Initialize the children of the child node
-        child.children = { Node(child, self.game.result(child.state, action)): action for action in self.game.actions(child.state) }
-        
-        return child
 
-    def simulate(self, state):
-        """Simulates a random play-through from the given state to a terminal state.
 
-        Args:
-            state (ShobuState): The state to simulate from.
+    def alpha_beta_search(self, state):
 
-        Returns:
-            float: The utility value of the resulting terminal state in the point of view of the opponent in the original state.
-        """
-        # Set up a counter to avoid infinite loops and save what player is about to move
-        i = 0
-        player = self.game.to_move(state)
-        opponent = 1 - player
-        
-        
-        while self.game.is_terminal(state) == False and i < 500:
-            action = random.choice(self.game.actions(state))
-            state = self.game.result(state, action)
-            i += 1
-        
-        # Need to inverse it because we look for the node behind not this state
-        return self.game.utility(state, opponent)
+        _, action = self.max_value(state, -float("inf"), float("inf"), 0)
+        print(_)
+        return action
 
-    def back_propagate(self, result, node):
-        """Propagates the result of a simulation back up the tree, updating node statistics.
+    def max_value(self, state, alpha, beta, depth):
 
-        This method is responsible for updating the statistics for each node according to the result of the simulation. 
-        It recursively updates the U (utility) and N (number of visits) values for each node on the path from the given 
-        node to the root. The utility of a node is only updated if it is a node that must contain the win rate of the 
-        player who won the simulation, otherwise the utility is not modified.
-
-        Args:
-            result (float): The result of the simulation.
-            node (Node): The node to start backpropagation from.
-        """
-        # Escape condition
-        if node == None:
-            return
-        
-        # Update the node statistics
-        node.N += 1
-        if result == 1:
-            node.U += 1
-        
-        
-        self.back_propagate(-result, node.parent)
+        if self.is_cutoff(state, depth):
+            return self.eval(state), None
+        value = -float("inf")
+        best_action = None
+        for action in self.game.actions(state):
+            value2, action2 = self.min_value(self.game.result(state, action), alpha, beta, depth + 1)
+            if value2 > value:
+                value = value2
+                best_action = action
+            if value >= beta:
+                beta = value
+        return value, best_action
         
 
-    def UCB1(self, node):
-        """Calculates the UCB1 value for a given node.
 
-        Args:
-            node (Node): The node to calculate the UCB1 value for. 
+    def min_value(self, state, alpha, beta, depth):
 
-        Returns:
-            float: The UCB1 value of the node. Returns infinity if the node has not been visited yet.
-        """
-        if node.N == 0:
-            return float('inf')
-        
-        return node.U / node.N + math.sqrt(2 * math.log(node.parent.N) / node.N)
+        if self.is_cutoff(state, depth):
+            return self.eval(state), None
+        value = float("inf")
+        best_action = None
+        for action in self.game.actions(state):
+            value2, action2 = self.max_value(self.game.result(state, action), alpha, beta, depth + 1)
+            if value2 < value:
+                value = value2
+                best_action = action
+            if value <= alpha:
+                alpha = value
+        return value, best_action
+    
