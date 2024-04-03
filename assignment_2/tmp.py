@@ -1,12 +1,12 @@
 import os
 import numpy as np
 
-folder = "output_random1000/numpy/white"
-files = os.listdir(folder)
+file = "ingi.txt"
 
-for file in files:
-    data = np.load(folder+"/"+file)
-    data = data[:, 32:]
+with open(file, "r") as f_in:
+    f_in = f_in.readlines()[0].replace("|", "\n")
+    print(f_in)
     
-    print(data[-2:,:]) 
+    with open(file+"Out", "w") as f_out:
+        f_out.write(f_in)
 
