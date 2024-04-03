@@ -43,8 +43,8 @@ model.summary()
 # First loading all the training data
 # Just loading a game
 if not load:
-    X = np.empty([100000*400, 32]) # On average there is max 400 turns in a game
-    Y = np.empty([100000*400, 4]) # On average there is max 400 turns in a game
+    X = np.empty([100000*300, 32]) # On average there is max 300 turns in a game
+    Y = np.empty([100000*300, 4]) # On average there is max 300 turns in a game
     size = 0
     i = 0
     
@@ -116,7 +116,7 @@ else:
     Y = np.load("Y.npy")
 
     
-model.fit(X, Y, epochs=10, batch_size=32)
+model.fit(X, Y, epochs=10, batch_size=32, shuffle=True, validation_split=0.2)
 
 
 # Saving the model
