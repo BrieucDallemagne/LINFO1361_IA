@@ -171,10 +171,11 @@ BIASES = [BIAS1, BIAS2, BIAS3, BIAS4]
 
 # Creating the model
 model = Sequential([
-    Dense(26, activation='relu', input_shape=(33,)),
+    Dense(64, activation='relu', input_shape=(32,)),
+    Dense(64, activation='relu'),
+    Dense(32, activation='relu'),
     Dense(16, activation='relu'),
-    Dense(8, activation='relu'),
-    Dense(1, activation='sigmoid')
+    Dense(4, activation='linear'),
 ])
 
 # Loading all weight and Bias
@@ -468,6 +469,8 @@ class AI(Agent):
         return depth >= self.max_depth or self.game.is_terminal(state)
     
     def eval(self, state):
+        joueur = self.player
+        adversaire = 1 - self.player
         
         def lost(state):
             possible_actions = self.game.actions(state)
@@ -506,8 +509,8 @@ class AI(Agent):
             return  (((joueur_score - adversaire_score)/(joueur_score + adversaire_score)) + 1)/2 
 
                    
-        #if lost(state):
-            #return -100
+        if lost(state):
+            return -100
     
 
         toreturn = 0.2*count_pieces(self, state) + 0.8*count_min_pieces(self, state)
