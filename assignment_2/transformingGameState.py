@@ -53,11 +53,12 @@ def reward_system(game, state, actions, depth=2):
         
         # Check for win
         if white_value == 0:
-            value_board[i] = equivalence_list[8]
+            value_board[i] += equivalence_list[8]
         elif black_value == 0:
-            value_board[i] = equivalence_list[0]
+            value_board[i] += equivalence_list[0]
         else:
-            value_board[i] = equivalence_list[black_value - white_value + 4] # 4 is the middle of the list
+            value_board[i] += equivalence_list[8-black_value] # 4 is the middle of the list
+            value_board[i] += equivalence_list[white_value] # 4 is the middle of the list
     
     for action, _ in actions:
         state = game.result(state, action)
@@ -65,7 +66,14 @@ def reward_system(game, state, actions, depth=2):
             white_value = len(state.board[i][0])
             black_value = len(state.board[i][1])
 
-            value_board[i] += equivalence_list[black_value - white_value + 4]
+            # Check for win
+            if white_value == 0:
+                value_board[i] += equivalence_list[8]
+            elif black_value == 0:
+                value_board[i] += equivalence_list[0]
+            else:
+                value_board[i] += equivalence_list[8-black_value] # 4 is the middle of the list
+                value_board[i] += equivalence_list[white_value] # 4 is the middle of the list
         a+=1 # to count the amount of action actually taken
 
     for i in range(4):
@@ -75,7 +83,7 @@ def reward_system(game, state, actions, depth=2):
             
 
 # New function to convert the game state to a numpy array
-def game_state_to_numpy(actions, depth=2):
+def game_state_to_numpy(actions, depth=5):
     game = ShobuGame()
     state = game.initial
     game_result = np.zeros((1,36))
@@ -105,6 +113,8 @@ for f in files_black:
     actions = read_logs(folder+"/black/"+f)
 
     game_result = game_state_to_numpy(actions)
+    #print(game_result[-2:,32:])
+    #print(np.count_nonzero(game_result[-1,32:]==50))
     np.save(folder+"/numpy/black/"+f, game_result)
 
 for f in files_white:
