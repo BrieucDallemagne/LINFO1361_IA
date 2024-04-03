@@ -114,7 +114,7 @@ model.fit(X, Y, epochs=10, batch_size=32)
 
 
 # Saving the model
-model.save("shobu_model_big2.keras")
+model.save("shobu_reward.keras")
 
 # Testing the model
 # Example with a white win
