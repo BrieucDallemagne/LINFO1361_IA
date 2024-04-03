@@ -241,7 +241,7 @@ class AI2(Agent):
         self.offset = 0
         self.lastvalue = 0.5
         self.coup = 0
-        self.max_depth = 3
+        self.max_depth = 2
         if self.player == 1:
             self.offset = 1
         
@@ -278,11 +278,9 @@ class AI2(Agent):
         turn = self.i*2 + self.offset
         self.i += 1
         duration = 0
-        #start = time.time()
+        start = time.time()
 
-        val, action = self.max_value(state, -float("inf"), float("inf"), 0)
-        print(val)
-        return action
+
 
         for action in possible_actions:
 
@@ -430,7 +428,7 @@ class AI(Agent):
         self.offset = 0
         self.lastvalue = 0.5
         self.coup = 0
-        self.max_depth = 2
+        self.max_depth = 2 
         if self.player == 1:
             self.offset = 1
         
@@ -453,6 +451,9 @@ class AI(Agent):
             plt.ylim(0, 1)
 
     def play(self, state, remaining_time):
+        self.coup += 1
+        if self.coup >= 10:
+            self.max_depth = 3
 
         possible_actions = self.game.actions(state)
         for action in possible_actions:
@@ -460,7 +461,7 @@ class AI(Agent):
             if self.game.is_terminal(new):
                 return action
 
-        return self.alpha_beta_search(state)
+        return self.alpha_beta_search(state,remaining_time)
     
     def is_cutoff(self, state, depth):
 
@@ -505,8 +506,8 @@ class AI(Agent):
             return  (((joueur_score - adversaire_score)/(joueur_score + adversaire_score)) + 1)/2 
 
                    
-        if lost(state):
-            return -100
+        #if lost(state):
+            #return -100
     
 
         toreturn = 0.2*count_pieces(self, state) + 0.8*count_min_pieces(self, state)
@@ -515,19 +516,20 @@ class AI(Agent):
 
 
 
-    def alpha_beta_search(self, state):
+    def alpha_beta_search(self, state,time):
 
-        _, action = self.max_value(state, -float("inf"), float("inf"), 0)
-        print(_)
+        _, action = self.max_value(state, -float("inf"), float("inf"), 0,time)
+
         return action
 
-    def max_value(self, state, alpha, beta, depth):
+    def max_value(self, state, alpha, beta, depth,time):
 
         if self.is_cutoff(state, depth):
             return self.eval(state), None
         value = -float("inf")
         best_action = None
-        for action in self.game.actions(state):
+        pos = self.game.actions(state)
+        for action in pos:
             value2, action2 = self.min_value(self.game.result(state, action), alpha, beta, depth + 1)
             if value2 > value:
                 value = value2
@@ -538,13 +540,14 @@ class AI(Agent):
         
 
 
-    def min_value(self, state, alpha, beta, depth):
+    def min_value(self, state, alpha, beta, depth,time):
 
         if self.is_cutoff(state, depth):
             return self.eval(state), None
         value = float("inf")
         best_action = None
-        for action in self.game.actions(state):
+        pos = self.game.actions(state)
+        for action in pos:
             value2, action2 = self.max_value(self.game.result(state, action), alpha, beta, depth + 1)
             if value2 < value:
                 value = value2
