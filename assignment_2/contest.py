@@ -498,8 +498,9 @@ class AI(Agent):
         self.i = 0
         self.offset = 0
         self.lastvalue = 0.5
+        self.laststate = convert_to_numpy(self.game.initial)
         self.coup = 0
-        self.max_depth = 1 
+        self.max_depth = 2 
         if self.player == 1:
             self.offset = 1
         
@@ -524,15 +525,19 @@ class AI(Agent):
     def play(self, state, remaining_time):
         start = time.time()
         self.coup += 1
-        if self.coup >= 10:
+
+        if self.coup > 1:
             self.max_depth = 3
+
+        if self.coup > 12:
+            self.max_depth = 4
 
         possible_actions = self.game.actions(state)
         for action in possible_actions:
             new = self.game.result(state, action)
             if self.game.is_terminal(new):
                 return action
-
+            
         return self.alpha_beta_search(state,remaining_time,start)
     
     def is_cutoff(self, state, depth):
@@ -563,10 +568,25 @@ class AI(Agent):
                 min_joueur = min(min_joueur, len(board[self.player]))
                 min_adversaire = min(min_adversaire, len(board[adversaire]))
 
-            if min_adversaire == 0:
-                return self.player
-            
-            return  (((min_joueur - min_adversaire)/(min_joueur + min_adversaire)) + 1)/2
+            malus = 0
+            if min_joueur == 3:
+                malus = 0.1
+            if min_joueur == 2:
+                malus = 0.5
+
+            if min_joueur == 1:
+                malus = 2
+
+            bonus = 0
+            if min_adversaire == 3:
+                bonus = 0.1
+            if min_adversaire == 2:
+                bonus = 0.5
+            if min_adversaire == 1:
+                bonus = 2
+            return  (((min_joueur - min_adversaire - malus + bonus)/(min_joueur + min_adversaire)) + 1)/2
+        
+
 
         def count_pieces(self, state):
 
@@ -579,30 +599,54 @@ class AI(Agent):
                 adversaire_score += len(board[adversaire])
             return  (((joueur_score - adversaire_score)/(joueur_score + adversaire_score)) + 1)/2 
 
-                   
-        #if lost(state):
-        #    return -100
+        def count_in_center(self, state):            
+            joueur = self.player
+            adversaire = 1 - self.player
+            joueur_score = 0
+            adversaire_score = 0
+            for board in state.board:
+                if 6 in board[self.player] or 7 in board[self.player] or 10 in board[self.player] or 11 in board[self.player]:
+                    joueur_score += 1
+                if 6 in board[adversaire] or 7 in board[adversaire] or 10 in board[adversaire] or 11 in board[adversaire]:
+                    adversaire_score += 1
+            return (joueur_score - adversaire_score)/10 
+        
+        if self.coup > 10:
+            if lost(state):
+                return -100
 
         #AI 
-        
-        
-        numpy_state = convert_to_numpy(state)
-        reward_boards = model.predict(numpy_state)
-        # Perhaps need to take better decision ?
-        # The values are positive if it's black playing
-        if joueur != 1:
-            reward_boards = - reward_boards
-        return np.sum(reward_boards)
+        def eval_IA(self,state):  
+            last_state = self.laststate
+            lastval = self.lastvalue      
+            numpy_state = convert_to_numpy(state)
+            reward_boards = model.predict(numpy_state,verbose = 0)
+            reward_last = model.predict(last_state,verbose = 0)
+            # Perhaps need to take better decision ?
+            # The values are positive if it's black playing
+            if joueur != 1:
+                reward_boards = - reward_boards
+                reward_last = - reward_last
 
-        toreturn = 0.2*count_pieces(self, state) + 0.3*count_min_pieces(self, state)
-
-        return toreturn
+            val_now = ((np.sum(reward_boards)/4) +50)/100
+            val_last = ((np.sum(reward_last)/4) +50)/100
+            toret = (((val_now - val_last)/ (val_now + val_last))+1)/2
+            return toret
+        
+        #if self.coup < 10:
+        return 0.2*count_pieces(self, state) + 2*count_min_pieces(self, state)+ 0.1*count_in_center(self, state)
+        #else:
+            #self.max_depth = 1
+            #return 0.2*count_pieces(self, state) + 0.7*count_min_pieces(self, state) + 0.1*eval_IA(self, state)
 
 
 
     def alpha_beta_search(self, state,time,start):
 
         _, action = self.max_value(state, -float("inf"), float("inf"), 0,time,start)
+
+        new = self.game.result(state, action)
+        self.laststate = convert_to_numpy(state)
 
         return action
 
@@ -644,195 +688,4 @@ class AI(Agent):
             if value <= alpha:
                 alpha = value
         return value, best_action
-    
-class AI2(Agent):
-    """An agent that plays following your algorithm.
-
-    This agent extends the base Agent class, providing an implementation your agent.
-
-    Attributes:
-        player (int): The player id this agent represents.
-        game (ShobuGame): The game the agent is playing.
-    """
-    def __init__(self, player, game, debugging=False):
-        super().__init__(player, game)
-        self.i = 0
-        self.offset = 0
-        self.lastvalue = 0.5
-        self.coup = 0
-        self.max_depth = 2
-        if self.player == 1:
-            self.offset = 1
-        
-        self.debugging = debugging
-        
-        if debugging:                
-            plt.ion()
-            self.fig = plt.figure()
-            self.ax = self.fig.add_subplot(111)
-            self.x = [0]
-            self.y = [0]
-            self.line1, = self.ax.plot(self.x, self.y)
-            
-            # setting labels
-            plt.xlabel("X-axis")
-            plt.ylabel("Y-axis")
-            plt.title(f"Our basic AI playing for {self.player}")
-            plt.xlim(0, 40)
-            plt.grid()
-            plt.ylim(0, 1)
-
-    def play(self, state, remaining_time):
-        """Determines the next action to take in the given state.
-
-        Args:
-            state (ShobuState): The current state of the game.
-            remaining_time (float): The remaining time in seconds that the agent has to make a decision.
-
-        Returns:
-            ShobuAction: The chosen action.
-        """
-        possible_actions = self.game.actions(state)
-        value_actions = []
-        turn = self.i*2 + self.offset
-        self.i += 1
-        duration = 0
-        start = time.time()
-
-
-
-        for action in possible_actions:
-
-            #if self.coup == 0 and self.player == 0  and action == (0,0,1,0,5,1):
-            #    self.coup = 1
-            #    return action
-
-            # 10% of the remaining time to be careful
-            if duration * 10 > remaining_time:
-                break
-            
-            new_state = self.game.result(state, action)
-
-            if self.game.is_terminal(new_state):
-                return action
-            
-            numpy_state = convert_to_numpy(new_state)
-            numpy_state = np.append(numpy_state, turn)
-            numpy_state = numpy_state.reshape(1, -1)
-
-            value_neural = model.predict(numpy_state, verbose=0)
-
-            value_heuristic = self.evaluate(new_state) 
-            print(value_heuristic)
-            
-            value = 0.1*value_neural + 0.9*value_heuristic
-            
-            if self.player == 1:
-                if value*0.9 > self.lastvalue:
-                    self.lastvalue = value
-                    return action
-            if self.player == 0:
-                if value*1.1 < self.lastvalue:
-                    self.lastvalue = value
-                    return action
-            value_actions.append(value)
-            duration = time.time() - start
-        
-        if len(value_actions) == 0:
-            # In case we didn't have time to even compute 1 action
-            value_actions = [0]
-        
-        # Choose the action with the highest value
-        # We are playing black and AI was trained to play black
-        if self.player != 1:
-            value_actions = 1 - np.array(value_actions)
-        value_actions = np.array(value_actions)
-        best_action = possible_actions[np.argmax(value_actions)]
-        
-        if self.debugging:
-            # Update the plot
-            self.x.append(self.i)
-            self.y.append(np.max(value_actions))
-            
-            self.line1.set_xdata(self.x)
-            self.line1.set_ydata(self.y)
-            
-            # re-drawing the figure
-            self.fig.canvas.draw()
-            
-            # to flush the GUI events
-            self.fig.canvas.flush_events()
-        
-        return best_action
-
-    def evaluate(self, state):
-        """Computes a heuristic value for the given state.
-
-        Args:
-            state (ShobuState): The state to evaluate.
-
-        Returns:
-            float: The heuristic value of the state.
-        """
-        
-        def lost(state):
-            possible_actions = self.game.actions(state)
-            for action in possible_actions:
-                new_state = self.game.result(state, action)
-                if self.game.is_terminal(new_state):
-                    return True
-            return False
-        
-    
-
-        def count_min_pieces(self, state):
-            """Evaluates the given state and returns a score from the perspective of the agent's player.
-
-            Args:
-                state (ShobuState): The game state to evaluate.
-
-            Returns:
-                float: The evaluated score of the state.
-            """
-            joueur = self.player
-            adversaire = 1 - self.player
-            min_joueur = 10
-            min_adversaire = 10
-            for board in state.board:
-                min_joueur = min(min_joueur, len(board[self.player]))
-                min_adversaire = min(min_adversaire, len(board[adversaire]))
-
-            if min_adversaire == 0:
-                return self.player
-            
-            return  (((min_joueur - min_adversaire)/(min_joueur + min_adversaire)) + 1)/2
-
-        def count_pieces(self, state):
-            """Evaluates the given state and returns a score from the perspective of the agent's player.
-
-            Args:
-                state (ShobuState): The game state to evaluate.
-
-            Returns:
-                float: The evaluated score of the state.
-            """
-            joueur = self.player
-            adversaire = 1 - self.player
-            joueur_score = 0
-            adversaire_score = 0
-            for board in state.board:
-                joueur_score += len(board[self.player])
-                adversaire_score += len(board[adversaire])
-            return  (((joueur_score - adversaire_score)/(joueur_score + adversaire_score)) + 1)/2 
-
-                   
-        if lost(state):
-            return 1 - self.player
-    
-        if self.player != 1:
-            toreturn =  1 - (0.2*count_pieces(self, state) + 0.8*count_min_pieces(self, state))
-        else:
-            toreturn = 0.2*count_pieces(self, state) + 0.8*count_min_pieces(self, state)
-
-        return toreturn
     
