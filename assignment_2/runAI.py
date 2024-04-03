@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 model = Sequential()
 model.add(Dense(64, input_shape=(32,), activation='relu'))
 model.add(Dense(64, activation='relu'))
+model.add(Dense(32, activation='relu'))
+model.add(Dense(16, activation='relu'))
 model.add(Dense(4, activation='linear'))  # Output layer with linear activation
 
 #model.compile(optimizer='adam', loss="binary_crossentropy" , metrics=['accuracy'])

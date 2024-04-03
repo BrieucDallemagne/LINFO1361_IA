@@ -29,6 +29,8 @@ else:
 model = Sequential()
 model.add(Dense(64, input_shape=(32,), activation='relu'))
 model.add(Dense(64, activation='relu'))
+model.add(Dense(32, activation='relu'))
+model.add(Dense(16, activation='relu'))
 model.add(Dense(4, activation='linear'))  # Output layer with linear activation
 
 model.compile(optimizer='adam', loss="mean_squared_error" , metrics=['accuracy'])
@@ -37,12 +39,17 @@ model.summary()
 
 # Training the model
 
+
 # First loading all the training data
 # Just loading a game
 if not load:
-    X = []
-    Y = []
+    X = np.empty([100000*400, 32]) # On average there is max 400 turns in a game
+    Y = np.empty([100000*400, 4]) # On average there is max 400 turns in a game
     size = 0
+    i = 0
+    
+    print(X.shape)
+    print(Y.shape)
 
     games = os.listdir(folder+"/draw")
 
@@ -51,8 +58,10 @@ if not load:
         input_data = data[:, :32]
         output_data = data[:, 32:]
         
-        X = [*X,*input_data]
-        Y = [*Y, *output_data]
+        for a in range(len(input_data)):
+            X[size] = input_data[a]
+            Y[size] = output_data[a].reshape(1,4)
+            size += 1
     
     print(len(X))
     print(len(Y))
@@ -65,8 +74,10 @@ if not load:
         input_data = data[:, :32]
         output_data = data[:, 32:]
         
-        X = [*X,*input_data]
-        Y = [*Y, *output_data]
+        for a in range(len(input_data)):
+            X[size] = input_data[a]
+            Y[size] = output_data[a].reshape(1,4)
+            size += 1
         
 
         
@@ -81,17 +92,20 @@ if not load:
         input_data = data[:, :32]
         output_data = data[:, 32:]
         
-        X = [*X,*input_data]
-        Y = [*Y, *output_data]
+        for a in range(len(input_data)):
+            X[size] = input_data[a]
+            Y[size] = output_data[a].reshape(1,4)
+            size += 1
 
 
     print(len(X))
     print(len(Y))
-
-    Y = np.array(Y)
-    #Y += 50
-    X = np.array(X)
+    print(size)
     
+    X = X[:size, :]
+    Y = Y[:size, :]
+    
+    #Y += 50
     print(X.shape)
     print(Y.shape)
 
