@@ -499,7 +499,7 @@ class AI(Agent):
         self.offset = 0
         self.lastvalue = 0.5
         self.coup = 0
-        self.max_depth = 2 
+        self.max_depth = 1 
         if self.player == 1:
             self.offset = 1
         
@@ -582,9 +582,19 @@ class AI(Agent):
                    
         #if lost(state):
         #    return -100
-    
 
-        toreturn = 0.2*count_pieces(self, state) + 0.8*count_min_pieces(self, state)
+        #AI 
+        
+        
+        numpy_state = convert_to_numpy(state)
+        reward_boards = model.predict(numpy_state)
+        # Perhaps need to take better decision ?
+        # The values are positive if it's black playing
+        if joueur != 1:
+            reward_boards = - reward_boards
+        return np.sum(reward_boards)
+
+        toreturn = 0.2*count_pieces(self, state) + 0.3*count_min_pieces(self, state)
 
         return toreturn
 
