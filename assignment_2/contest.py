@@ -177,6 +177,7 @@ model = Sequential([
     Dense(16, activation='relu'),
     Dense(4, activation='linear'),
 ])
+"""
 
 # Loading all weight and Bias
 for i in range(len(WEIGHTS)):
@@ -184,6 +185,7 @@ for i in range(len(WEIGHTS)):
     BIASES[i] = BIASES[i].reshape(BIASES[i].shape[0])
 
     model.layers[i].set_weights([WEIGHTS[i], BIASES[i]])
+"""
     
 def convert_to_numpy(state):
     """
@@ -227,6 +229,155 @@ class Node:
         self.N = 0
         self.children = {}
         
+
+
+    
+class AI(Agent):
+
+
+    def __init__(self, player, game, debugging=False):
+
+        super().__init__(player, game)
+        self.i = 0
+        self.offset = 0
+        self.lastvalue = 0.5
+        self.coup = 0
+        self.max_depth = 2 
+        if self.player == 1:
+            self.offset = 1
+        
+        self.debugging = debugging
+        
+        if debugging:                
+            plt.ion()
+            self.fig = plt.figure()
+            self.ax = self.fig.add_subplot(111)
+            self.x = [0]
+            self.y = [0]
+            self.line1, = self.ax.plot(self.x, self.y)
+            
+            # setting labels
+            plt.xlabel("X-axis")
+            plt.ylabel("Y-axis")
+            plt.title(f"Our basic AI playing for {self.player}")
+            plt.xlim(0, 40)
+            plt.grid()
+            plt.ylim(0, 1)
+
+    def play(self, state, remaining_time):
+        start = time.time()
+        self.coup += 1
+        if self.coup >= 10:
+            self.max_depth = 3
+
+        possible_actions = self.game.actions(state)
+        for action in possible_actions:
+            new = self.game.result(state, action)
+            if self.game.is_terminal(new):
+                return action
+
+        return self.alpha_beta_search(state,remaining_time,start)
+    
+    def is_cutoff(self, state, depth):
+
+        return depth >= self.max_depth or self.game.is_terminal(state)
+    
+    def eval(self, state):
+        joueur = self.player
+        adversaire = 1 - self.player
+        
+        def lost(state):
+            possible_actions = self.game.actions(state)
+            for action in possible_actions:
+                new_state = self.game.result(state, action)
+                if self.game.is_terminal(new_state):
+                    return True
+            return False
+        
+    
+
+        def count_min_pieces(self, state):
+
+            joueur = self.player
+            adversaire = 1 - self.player
+            min_joueur = 10
+            min_adversaire = 10
+            for board in state.board:
+                min_joueur = min(min_joueur, len(board[self.player]))
+                min_adversaire = min(min_adversaire, len(board[adversaire]))
+
+            if min_adversaire == 0:
+                return self.player
+            
+            return  (((min_joueur - min_adversaire)/(min_joueur + min_adversaire)) + 1)/2
+
+        def count_pieces(self, state):
+
+            joueur = self.player
+            adversaire = 1 - self.player
+            joueur_score = 0
+            adversaire_score = 0
+            for board in state.board:
+                joueur_score += len(board[self.player])
+                adversaire_score += len(board[adversaire])
+            return  (((joueur_score - adversaire_score)/(joueur_score + adversaire_score)) + 1)/2 
+
+                   
+        #if lost(state):
+        #    return -100
+    
+
+        toreturn = 0.2*count_pieces(self, state) + 0.8*count_min_pieces(self, state)
+
+        return toreturn
+
+
+
+    def alpha_beta_search(self, state,time,start):
+
+        _, action = self.max_value(state, -float("inf"), float("inf"), 0,time,start)
+
+        return action
+
+    def max_value(self, state, alpha, beta, depth,time_remaining,start):
+        duration = time.time() - start
+        if duration * 10 > time_remaining:
+            return self.eval(state), None
+        
+
+        if self.is_cutoff(state, depth):
+            return self.eval(state), None
+        value = -float("inf")
+        best_action = None
+        pos = self.game.actions(state)
+        for action in pos:
+
+            value2, action2 = self.min_value(self.game.result(state, action), alpha, beta, depth + 1,time_remaining,start)
+            if value2 > value:
+                value = value2
+                best_action = action
+            if value >= beta:
+                beta = value
+        return value, best_action
+        
+
+
+    def min_value(self, state, alpha, beta, depth,time_remaining,start):
+
+        if self.is_cutoff(state, depth):
+            return self.eval(state), None
+        value = float("inf")
+        best_action = None
+        pos = self.game.actions(state)
+        for action in pos:
+            value2, action2 = self.max_value(self.game.result(state, action), alpha, beta, depth + 1,time_remaining,start)
+            if value2 < value:
+                value = value2
+                best_action = action
+            if value <= alpha:
+                alpha = value
+        return value, best_action
+    
 class AI2(Agent):
     """An agent that plays following your algorithm.
 
@@ -417,145 +568,4 @@ class AI2(Agent):
             toreturn = 0.2*count_pieces(self, state) + 0.8*count_min_pieces(self, state)
 
         return toreturn
-
-    
-class AI(Agent):
-
-
-    def __init__(self, player, game, debugging=False):
-
-        super().__init__(player, game)
-        self.i = 0
-        self.offset = 0
-        self.lastvalue = 0.5
-        self.coup = 0
-        self.max_depth = 2 
-        if self.player == 1:
-            self.offset = 1
-        
-        self.debugging = debugging
-        
-        if debugging:                
-            plt.ion()
-            self.fig = plt.figure()
-            self.ax = self.fig.add_subplot(111)
-            self.x = [0]
-            self.y = [0]
-            self.line1, = self.ax.plot(self.x, self.y)
-            
-            # setting labels
-            plt.xlabel("X-axis")
-            plt.ylabel("Y-axis")
-            plt.title(f"Our basic AI playing for {self.player}")
-            plt.xlim(0, 40)
-            plt.grid()
-            plt.ylim(0, 1)
-
-    def play(self, state, remaining_time):
-        self.coup += 1
-        if self.coup >= 10:
-            self.max_depth = 3
-
-        possible_actions = self.game.actions(state)
-        for action in possible_actions:
-            new = self.game.result(state, action)
-            if self.game.is_terminal(new):
-                return action
-
-        return self.alpha_beta_search(state,remaining_time)
-    
-    def is_cutoff(self, state, depth):
-
-        return depth >= self.max_depth or self.game.is_terminal(state)
-    
-    def eval(self, state):
-        joueur = self.player
-        adversaire = 1 - self.player
-        
-        def lost(state):
-            possible_actions = self.game.actions(state)
-            for action in possible_actions:
-                new_state = self.game.result(state, action)
-                if self.game.is_terminal(new_state):
-                    return True
-            return False
-        
-    
-
-        def count_min_pieces(self, state):
-
-            joueur = self.player
-            adversaire = 1 - self.player
-            min_joueur = 10
-            min_adversaire = 10
-            for board in state.board:
-                min_joueur = min(min_joueur, len(board[self.player]))
-                min_adversaire = min(min_adversaire, len(board[adversaire]))
-
-            if min_adversaire == 0:
-                return self.player
-            
-            return  (((min_joueur - min_adversaire)/(min_joueur + min_adversaire)) + 1)/2
-
-        def count_pieces(self, state):
-
-            joueur = self.player
-            adversaire = 1 - self.player
-            joueur_score = 0
-            adversaire_score = 0
-            for board in state.board:
-                joueur_score += len(board[self.player])
-                adversaire_score += len(board[adversaire])
-            return  (((joueur_score - adversaire_score)/(joueur_score + adversaire_score)) + 1)/2 
-
-                   
-        if lost(state):
-            return -100
-    
-
-        toreturn = 0.2*count_pieces(self, state) + 0.8*count_min_pieces(self, state)
-
-        return toreturn
-
-
-
-    def alpha_beta_search(self, state,time):
-
-        _, action = self.max_value(state, -float("inf"), float("inf"), 0,time)
-
-        return action
-
-    def max_value(self, state, alpha, beta, depth,time):
-
-        if self.is_cutoff(state, depth):
-            return self.eval(state), None
-        value = -float("inf")
-        best_action = None
-        pos = self.game.actions(state)
-        for action in pos:
-            value2, action2 = self.min_value(self.game.result(state, action), alpha, beta, depth + 1)
-            if value2 > value:
-                value = value2
-                best_action = action
-            if value >= beta:
-                beta = value
-        return value, best_action
-        
-
-
-    def min_value(self, state, alpha, beta, depth,time):
-
-        if self.is_cutoff(state, depth):
-            return self.eval(state), None
-        value = float("inf")
-        best_action = None
-        pos = self.game.actions(state)
-        for action in pos:
-            value2, action2 = self.max_value(self.game.result(state, action), alpha, beta, depth + 1)
-            if value2 < value:
-                value = value2
-                best_action = action
-            if value <= alpha:
-                alpha = value
-        return value, best_action
     
