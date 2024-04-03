@@ -25,5 +25,5 @@ class RandomAgent(Agent):
 
         if len(actions) == 0:
             raise Exception("No actions available")
-
+        
         return random.choice(actions)

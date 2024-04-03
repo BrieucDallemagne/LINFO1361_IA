@@ -45,6 +45,8 @@ def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
 
     remaining_time_0 = play_time
     remaining_time_1 = play_time
+    
+    time_spent_avg = 0
 
     try:
         while not game.is_terminal(state) and run != -1 and remaining_time_0 > 0 and remaining_time_1 > 0:
@@ -59,6 +61,8 @@ def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
                     while action == -2:
                         action = agent_white.play(state, remaining_time_0)
                     if play_time is not None:
+                        time_spent_avg += time.perf_counter() - t0
+                        print(f"Time spent: {time.perf_counter() - t0}")
                         remaining_time_0 -= time.perf_counter() - t0
                 elif game.to_move(state) == 1:
                     t0 = time.perf_counter()
@@ -82,6 +86,7 @@ def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
 
             if display:
                 run = update_ui(state)
+        print(f"Average time spent: {time_spent_avg / n_moves*2}")
         
     except Exception as e:
         if log_file is not None:
