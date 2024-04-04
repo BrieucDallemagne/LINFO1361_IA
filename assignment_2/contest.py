@@ -499,8 +499,9 @@ class AI(Agent):
         self.offset = 0
         self.lastvalue = 0.5
         self.laststate = convert_to_numpy(self.game.initial)
+        self.last_reward = model.predict(self.laststate, verbose=0)
         self.coup = 0
-        self.max_depth = 2 
+        self.max_depth = 2
         if self.player == 1:
             self.offset = 1
         
@@ -525,13 +526,14 @@ class AI(Agent):
     def play(self, state, remaining_time):
         start = time.time()
         self.coup += 1
-
+        print(f"Coup: {self.coup}")
+        """
         if self.coup > 1:
             self.max_depth = 3
 
         if self.coup > 12:
             self.max_depth = 4
-
+        """
         possible_actions = self.game.actions(state)
         for action in possible_actions:
             new = self.game.result(state, action)
@@ -544,7 +546,11 @@ class AI(Agent):
 
         return depth >= self.max_depth or self.game.is_terminal(state)
     
-    def eval(self, state):
+    def is_cutoff_AI(self, state, depth):
+
+        return depth >= 1 or self.game.is_terminal(state)
+    
+    def eval(self, state, depth):
         joueur = self.player
         adversaire = 1 - self.player
         
@@ -610,18 +616,17 @@ class AI(Agent):
                 if 6 in board[adversaire] or 7 in board[adversaire] or 10 in board[adversaire] or 11 in board[adversaire]:
                     adversaire_score += 1
             return (joueur_score - adversaire_score)/10 
-        
+        """
         if self.coup > 10:
             if lost(state):
                 return -100
-
+        """
         #AI 
-        def eval_IA(self,state):  
-            last_state = self.laststate
-            lastval = self.lastvalue      
+        def eval_IA(self,state): 
+            #print("AI")
             numpy_state = convert_to_numpy(state)
             reward_boards = model.predict(numpy_state,verbose = 0)
-            reward_last = model.predict(last_state,verbose = 0)
+            reward_last = self.last_reward
             # Perhaps need to take better decision ?
             # The values are positive if it's black playing
             if joueur != 1:
@@ -632,38 +637,48 @@ class AI(Agent):
             val_last = ((np.sum(reward_last)/4) +50)/100
             toret = (((val_now - val_last)/ (val_now + val_last))+1)/2
             return toret
+        #print(depth)
+        if depth < 1:
+            print("AI")
+            return 0.2*count_pieces(self, state) + 0.7*count_min_pieces(self, state) + 0.1*eval_IA(self, state)
+        else:
+            return 0.2*count_pieces(self, state) + 2*count_min_pieces(self, state)+ 0.1*count_in_center(self, state)
         
-        #if self.coup < 10:
-        return 0.2*count_pieces(self, state) + 2*count_min_pieces(self, state)+ 0.1*count_in_center(self, state)
-        #else:
-            #self.max_depth = 1
-            #return 0.2*count_pieces(self, state) + 0.7*count_min_pieces(self, state) + 0.1*eval_IA(self, state)
+        if self.coup < 10:
+            return 0.2*count_pieces(self, state) + 2*count_min_pieces(self, state)+ 0.1*count_in_center(self, state)
+        else:
+            self.max_depth = 1
+
 
 
 
     def alpha_beta_search(self, state,time,start):
 
         _, action = self.max_value(state, -float("inf"), float("inf"), 0,time,start)
-
+        _, action_AI = self.max_value(state, -float("inf"), float("inf"), 0,time,start, AI=True)
+        
         new = self.game.result(state, action)
         self.laststate = convert_to_numpy(state)
 
         return action
 
-    def max_value(self, state, alpha, beta, depth,time_remaining,start):
+    def max_value(self, state, alpha, beta, depth,time_remaining,start, AI=False):
         duration = time.time() - start
         if duration * 10 > time_remaining:
-            return self.eval(state), None
+            print("TIME OUT")
+            return self.eval(state, depth), None
         
-
+        if AI:
+            if self.is_cutoff_AI(state, depth):
+                return self.eval(state,depth), None
         if self.is_cutoff(state, depth):
-            return self.eval(state), None
+            return self.eval(state, depth), None
         value = -float("inf")
         best_action = None
         pos = self.game.actions(state)
         for action in pos:
 
-            value2, action2 = self.min_value(self.game.result(state, action), alpha, beta, depth + 1,time_remaining,start)
+            value2, action2 = self.min_value(self.game.result(state, action), alpha, beta, depth + 1,time_remaining,start, AI=AI)
             if value2 > value:
                 value = value2
                 best_action = action
@@ -673,15 +688,19 @@ class AI(Agent):
         
 
 
-    def min_value(self, state, alpha, beta, depth,time_remaining,start):
+    def min_value(self, state, alpha, beta, depth,time_remaining,start, AI=False):
+
+        if AI:
+            if self.is_cutoff_AI(state, depth):
+                return self.eval(state,depth), None
 
         if self.is_cutoff(state, depth):
-            return self.eval(state), None
+            return self.eval(state, depth), None
         value = float("inf")
         best_action = None
         pos = self.game.actions(state)
         for action in pos:
-            value2, action2 = self.max_value(self.game.result(state, action), alpha, beta, depth + 1,time_remaining,start)
+            value2, action2 = self.max_value(self.game.result(state, action), alpha, beta, depth + 1,time_remaining,start, AI=AI)
             if value2 < value:
                 value = value2
                 best_action = action
