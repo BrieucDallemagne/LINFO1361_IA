@@ -657,10 +657,10 @@ class AI(Agent):
         _, action = self.max_value(state, -float("inf"), float("inf"), 0,time,start)
         _, action_AI = self.max_value(state, -float("inf"), float("inf"), 0,time,start, AI=True)
         
-        new = self.game.result(state, action)
+        new = self.game.result(state, action_AI)
         self.laststate = convert_to_numpy(state)
 
-        return action
+        return action_AI
 
     def max_value(self, state, alpha, beta, depth,time_remaining,start, AI=False):
         duration = time.time() - start
