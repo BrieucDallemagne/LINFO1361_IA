@@ -72,6 +72,69 @@ class NAmazonsProblem(Problem):
                 if col + 2 < self.N:
                     self.board[row+3*i][col+2] = "■"
 
+    def bad_position(self, col,row):
+        if self.board[row][col] == "■":
+            return True
+        
+        NW_length = min(row,col)
+        NE_length = min(row,self.N - col - 1)
+        SW_length = min(self.N - row - 1,col)
+        SE_length = min(self.N - row - 1,self.N - col - 1)
+        
+        # compute the queen moves
+        for i in range(1, self.N):
+            # horizontal and vertical moves
+            if self.board[row][(col+i)%self.N] == "🩎" or self.board[(row+i)%self.N][col] == "🩎":
+                return True
+            
+            # diagonal moves
+            
+        for i in range(1, NW_length + 1):
+            if self.board[row-i][col-i] == "🩎":
+                return True
+        for i in range(1, NE_length + 1):
+            if self.board[row-i][(col+i)%self.N] == "🩎":
+                return True
+        for i in range(1, SW_length + 1):
+            if self.board[(row+i)%self.N][col-i] == "🩎":
+                return True
+        for i in range(1, SE_length + 1):
+            if self.board[(row+i)%self.N][(col+i)%self.N] == "🩎":
+                return True
+            
+        # compute the super knight moves
+        # the 4-1 moves
+        for i in [-1, 1]:
+            if col + i*4 >= 0:
+                if row -1 >= 0:
+                    if self.board[row-1][col+4*i] == "🩎":
+                        return True
+                if row + 1 < self.N:
+                    if self.board[row+1][col+4*i] == "🩎":
+                        return True
+            if row + i*4 >= 0:
+                if col -1 >= 0:
+                    if self.board[row+4*i][col-1] == "🩎":
+                        return True
+                if col + 1 < self.N:
+                    if self.board[row+4*i][col+1] == "🩎":
+                        return True
+        # the 3-2 moves
+        for i in [-1, 1]:
+            if col + i*3 >= 0:
+                if row -2 >= 0:
+                    if self.board[row-2][col+3*i] == "🩎":
+                        return True
+                if row + 2 < self.N:
+                    if self.board[row+2][col+3*i] == "🩎":
+                        return True
+            if row + i*3 >= 0:
+                if col -2 >= 0:
+                    if self.board[row+3*i][col-2] == "🩎":
+                        return True
+                if col + 2 < self.N:
+                    if self.board[row+3*i][col+2] == "🩎":
+                        return True
         
 
     def actions(self, state):
@@ -83,7 +146,13 @@ class NAmazonsProblem(Problem):
         # get first index where self.initial[i] == -1
         col_to_fill = state.index(-1)
         
-                
+        available_rows = []
+        
+        for i in range(self.N):
+            if not self.bad_position(col_to_fill,i):
+                available_rows.append(i)
+        
+        return available_rows
 
 
     def result(self, state, row):
@@ -141,8 +210,7 @@ class NAmazonsProblem(Problem):
 #####################
 
 problem = NAmazonsProblem(int(sys.argv[1]))
-problem.compute_board(problem.initial,3,5)
-pprint.pprint(problem.board)
+print(problem.actions(problem.initial))
 
 start_timer = time.perf_counter()
 
