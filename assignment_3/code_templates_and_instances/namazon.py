@@ -1,6 +1,7 @@
 from search import *
 import numpy as np
 import time
+import pprint
 
 #################
 # Problem class #
@@ -17,24 +18,48 @@ class NAmazonsProblem(Problem):
         self.N = N
         self.initial = [-1] * N
         self.positions = []
+        self.board = [["□"] * N for _ in range(N)] # Create an empty board
         print(1)
                 
+    def compute_board(self,state,col, row):
+        self.board[row][col] = "🩎"
+        
+        NW_length = min(row,col)
+        NE_length = min(row,self.N - col - 1)
+        SW_length = min(self.N - row - 1,col)
+        SE_length = min(self.N - row - 1,self.N - col - 1)
+        
+        # compute the queen moves
+        for i in range(1, self.N):
+            # horizontal and vertical moves
+            self.board[row][(col+i)%self.N] = "■"
+            self.board[(row+i)%self.N][col] = "■"
             
+            # diagonal moves
+            
+        for i in range(1, NW_length + 1):
+            self.board[row-i][col-i] = "■"
+        for i in range(1, NE_length + 1):
+            self.board[row-i][(col+i)%self.N] = "■"
+        for i in range(1, SW_length + 1):
+            self.board[(row+i)%self.N][col-i] = "■"
+        for i in range(1, SE_length + 1):
+            self.board[(row+i)%self.N][(col+i)%self.N] = "■"
+
+
+        
 
     def actions(self, state):
         """Return the actions that can be executed in the given
         state. The result would typically be a list, but if there are
         many actions, consider yielding them one at a time in an
         iterator, rather than building them all at once."""
-        print(2)
-        possible_actions = self.actions(state)
-        val = []
-        for i in possible_actions:
-            eval = self.h(i)
-            val.append(eval)
+        # We can only fill left to right, and we can only place one queen in each column
+        # get first index where self.initial[i] == -1
+        col_to_fill = state.index(-1)
+        
+                
 
-        best_move = np.argmax(val)
-        return [possible_actions[best_move]]
 
     def result(self, state, row):
         """Return the state that results from executing the given
@@ -91,6 +116,8 @@ class NAmazonsProblem(Problem):
 #####################
 
 problem = NAmazonsProblem(int(sys.argv[1]))
+problem.compute_board(problem.initial,3,5)
+pprint.pprint(problem.board)
 
 start_timer = time.perf_counter()
 
