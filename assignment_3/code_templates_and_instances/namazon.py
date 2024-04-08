@@ -1,4 +1,5 @@
 from search import *
+import numpy as np
 import time
 
 #################
@@ -13,21 +14,77 @@ class NAmazonsProblem(Problem):
     filled in yet. We fill in columns left to right.
     """
     def __init__(self, N):
-        pass
+        self.N = N
+        self.initial = [-1] * N
+        self.positions = []
+        print(1)
+                
+            
 
     def actions(self, state):
-        pass
+        """Return the actions that can be executed in the given
+        state. The result would typically be a list, but if there are
+        many actions, consider yielding them one at a time in an
+        iterator, rather than building them all at once."""
+        print(2)
+        possible_actions = self.actions(state)
+        val = []
+        for i in possible_actions:
+            eval = self.h(i)
+            val.append(eval)
+
+        best_move = np.argmax(val)
+        return [possible_actions[best_move]]
 
     def result(self, state, row):
-        pass
+        """Return the state that results from executing the given
+        action in the given state. The action must be one of
+        self.actions(state)."""
+        print(3)
+        
+        return state
+        
 
     def goal_test(self, state):
-        pass
+        """Return True if the state is a goal. The default method compares the
+        state to self.goal or checks for state in self.goal if it is a
+        list, as specified in the constructor. Override this method if
+        checking against a single self.goal is not enough."""
+        for i in range(self.N):
+            if state[i] == -1:
+                return False
+        for i in range(self.N):
+            for j in range(i+1,self.N):
+                if self.is_attacking((i,state[i]),(j,state[j])):
+                            return False        
+        return True
 
     def h(self, node):
-        h = 0.0
+        print(5)
+        """ Return the heuristic value for a given state. Default heuristic is 0."""
+        return 0
+            
 
-        return h    
+
+    def is_attacking(self,dame1,dame2):
+        x1 = dame1[0]
+        y1 = dame1[1]
+        x2 = dame2[0]
+        y2 = dame2[1]
+        if x1 == x2 or y1 == y2 or abs(x1 - x2) == abs(y1 - y2) :
+            return True  
+        lst = [(1,4),(-1,4),(1,-4),(-1,-4),(4,1),(-4,1),(4,-1),(-4,-1),(2,3),(-2,3),(2,-3),(-2,-3),(3,2),(-3,2),(3,-2),(-3,-2)]
+        for i in lst:
+            if (x1 + i[0] == x2 and y1 + i[1] == y2):
+                return True
+            
+        #same move but in diagonal
+        lst2 = [(5,3),(-5,3),(5,-3),(-5,-3),(3,5),(-3,5),(3,-5),(-3,-5),(5,1),(-5,1),(5,-1),(-5,-1),(1,5),(-1,5),(1,-5),(-1,-5)]
+        for i in lst2:
+            if (x1 + i[0] == x2 and y1 + i[1] == y2):
+                return True
+        return False
+        
 
 #####################
 # Launch the search #
@@ -37,7 +94,7 @@ problem = NAmazonsProblem(int(sys.argv[1]))
 
 start_timer = time.perf_counter()
 
-node = ... # TODO: Launch the search
+node = astar_search(problem)
 
 end_timer = time.perf_counter()
 
