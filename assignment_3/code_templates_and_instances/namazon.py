@@ -45,7 +45,32 @@ class NAmazonsProblem(Problem):
             self.board[(row+i)%self.N][col-i] = "■"
         for i in range(1, SE_length + 1):
             self.board[(row+i)%self.N][(col+i)%self.N] = "■"
-
+            
+        # compute the super knight moves
+        # the 4-1 moves
+        for i in [-1, 1]:
+            if col + i*4 >= 0:
+                if row -1 >= 0:
+                    self.board[row-1][col+4*i] = "■"
+                if row + 1 < self.N:
+                    self.board[row+1][col+4*i] = "■"
+            if row + i*4 >= 0:
+                if col -1 >= 0:
+                    self.board[row+4*i][col-1] = "■"
+                if col + 1 < self.N:
+                    self.board[row+4*i][col+1] = "■"
+        # the 3-2 moves
+        for i in [-1, 1]:
+            if col + i*3 >= 0:
+                if row -2 >= 0:
+                    self.board[row-2][col+3*i] = "■"
+                if row + 2 < self.N:
+                    self.board[row+2][col+3*i] = "■"
+            if row + i*3 >= 0:
+                if col -2 >= 0:
+                    self.board[row+3*i][col-2] = "■"
+                if col + 2 < self.N:
+                    self.board[row+3*i][col+2] = "■"
 
         
 
