@@ -97,9 +97,7 @@ class NAmazonsProblem(Problem):
         iterator, rather than building them all at once."""
         # We can only fill left to right, and we can only place one queen in each column
         # get first index where self.initial[i] == -1
-        first_col = state.index(-1)
-        print(first_col)
-        
+        first_col = state.index(-1)        
         available_pos = []
         
         for row in range(self.N):
@@ -130,13 +128,24 @@ class NAmazonsProblem(Problem):
 
 
     def not_attacked(self,state,dame):
-        x1 = dame[0]
-        y1 = dame[1]
+        """Check if the dame is not attacked by the queens in the state
+
+        Args:
+            state (tuple): looking like (0,2,-1,-1) each index indicates a column and the value the row where the queen is placed
+            dame (tuple): (row,col) where the dame is placed (0,0) is the top left corner so it is (y,x)
+
+        Returns:
+            bool: return True if the dame is not attacked by the queens in the state
+        """
+        x1 = dame[1]
+        y1 = dame[0]
         for j in range(self.N):
             if state[j] != -1:
                 x2 = j
-                y2 = state[j]
-                if x1 == x2 or y1 == y2 or abs(x1 - x2) == abs(y1 - y2) :
+                y2 = state[j]                
+                if x1 == x2 or y1 == y2: 
+                    return False
+                if abs(x1 - x2) == abs(y1 - y2):
                     return False
                 lst = [[1,4],[-1,4],[1,-4],[-1,-4],[4,1],[-4,1],[4,-1],[-4,-1],[2,3],[-2,3],[2,-3],[-2,-3],[3,2],[-3,2],[3,-2],[-3,-2]]
                 for i in lst:
@@ -152,26 +161,21 @@ class NAmazonsProblem(Problem):
 #####################
 
 problem = NAmazonsProblem(int(sys.argv[1]))
-#problem.compute_board(problem.initial,0,0)
-#pprint.pprint(problem.board)
-#print(problem.forbidden_positions)
-#print(problem.actions(problem.initial))
 
-
+"""
 print(problem.actions(problem.initial))
 state = problem.result(problem.initial,problem.actions(problem.initial)[0])
+state = problem.result(state,problem.actions(state)[0])
+print(state)
 print(problem.actions(state))
 
 exit()
-
+"""
 start_timer = time.perf_counter()
 
 node = astar_search(problem, display=True)
 
 end_timer = time.perf_counter()
-
-print(end_timer - start_timer)
-print(node)
 
 # example of print
 path = node.path()
