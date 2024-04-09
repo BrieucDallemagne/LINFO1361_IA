@@ -154,11 +154,6 @@ class NAmazonsProblem(Problem):
             if (x1 + i[0] == x2 and y1 + i[1] == y2):
                 return True
             
-        #same move but in diagonal
-        lst2 = [(5,3),(-5,3),(5,-3),(-5,-3),(3,5),(-3,5),(3,-5),(-3,-5),(5,1),(-5,1),(5,-1),(-5,-1),(1,5),(-1,5),(1,-5),(-1,-5)]
-        for i in lst2:
-            if (x1 + i[0] == x2 and y1 + i[1] == y2):
-                return True
         return False
         
 
