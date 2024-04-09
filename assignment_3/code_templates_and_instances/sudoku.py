@@ -9,21 +9,68 @@ import numpy as np
 def objective_score(board):
     score = 0
     for i in range(9):
-        score += 9-len(np.unique(board[i])) 
-        score += 9-len(np.unique([board[j][i] for j in range(9)]))
+        if len(np.unique(board[i])) != 9:
+            score += 9 - len(np.unique(board[i]))
+        if len(np.unique([board[j][i] for j in range(9)])) != 9:
+            score += 9 - len(np.unique([board[j][i] for j in range(9)]))
+        for j in range(9):
+            if board[i][j] == 0:
+                score += 1
     return score
 
 def remplir_zeros(array):
-    counts = [np.count_nonzero(array == i) for i in range(1, 10)]
-    for i in range(len(array)):
-        for j in range(len(array[i])):
-            if array[i][j] == 0:
-                for k in range(1, 10):
-                    if counts[k-1] < 9:
-                        array[i][j] = k
-                        counts[k-1] += 1
-                        break
+    sub = find_subcarre(array)
+    for carre in sub:
+        for i in range(9):
+            if carre[i] == 0:
+                for j in range(9):
+                    if j +1 not in carre:
+                        carre[i] = j+1
+                        
+
+    array = subcarres_to_sudoku(sub)
     return array
+
+
+
+def find_subcarre(sudoku):
+    subcarres = []
+    for i in range(0, 9, 3):
+        for j in range(0, 9, 3):  
+            subcarre = []
+            for k in range(3):  
+                for l in range(3): 
+                    subcarre.append(sudoku[i + k][j + l])
+            subcarres.append(subcarre)
+    return subcarres
+
+def subcarres_to_sudoku(subcarres):
+    sudoku = [[0] * 9 for _ in range(9)]    
+    for i in range(0, 9, 3): 
+        for j in range(0, 9, 3):  
+            subcarre = subcarres.pop(0)  
+            for k in range(3):  
+                for l in range(3):  
+                    sudoku[i + k][j + l] = subcarre[k * 3 + l]
+    return sudoku
+
+def random_swap(board,initial_board):
+    
+    sub_board = find_subcarre(board)
+    sub_initial_board = find_subcarre(initial_board)
+    for _ in range(10):
+        board = random.randint(0,8)
+        i = random.randint(0,8)
+        j = random.randint(0,8)
+        while sub_initial_board[board][i] != 0 or sub_initial_board[board][j] != 0:
+            board = random.randint(0,8)
+            i = random.randint(0,8)
+            j = random.randint(0,8)
+        sub_board[board][i],sub_board[board][j] = sub_board[board][j],sub_board[board][i]
+    toreturn = subcarres_to_sudoku(sub_board)
+    return toreturn
+    
+    
         
 
 
@@ -44,47 +91,35 @@ def simulated_annealing_solver(initial_board):
 
     while temperature > 0.0001:
 
-        try:  
-            n += 1
-            
-            neighbor = current_solution.copy()           
+        try:
+            if current_score == 0:
+
+                return current_solution, current_score  
+            n += 1  
+            neighbor = [row[:] for row in current_solution]       
             neighbor_score = 0
             if n == 1:
                 neighbor = remplir_zeros(neighbor)
                 neighbor_score = objective_score(neighbor)
             else:
-                for i in range(9):
-                    pos1 = (random.randint(0, 8), random.randint(0, 8))
-                    pos2 = (random.randint(0, 8), random.randint(0, 8))
-                    while initial_board[pos1[0]][pos1[1]] != 0 or initial_board[pos2[0]][pos2[1]] != 0:
-                        pos1 = (random.randint(0, 8), random.randint(0, 8))
-                        pos2 = (random.randint(0, 8), random.randint(0, 8))
-                    
-                        neighbor[pos1[0]][pos1[1]], neighbor[pos2[0]][pos2[1]] = neighbor[pos2[0]][pos2[1]], neighbor[pos1[0]][pos1[1]]
-
-
-            # Evaluate the neighbor
-            neighbor_score = objective_score(neighbor)
-
+                random_swap(neighbor,initial_board)
+                neighbor_score = objective_score(neighbor)
+            
             # Calculate acceptance probability
             delta = float(current_score - neighbor_score)
-
-            if current_score == 0:
-
-                return current_solution, current_score
-
             # Accept the neighbor with a probability based on the acceptance probability
             if neighbor_score < current_score or (neighbor_score > 0 and math.exp((delta/temperature)) > random.random()):
 
-                current_solution = neighbor
+                current_solution = [row[:] for row in neighbor] 
                 current_score = neighbor_score
 
                 if (current_score < best_score):
-                    best_solution = current_solution
+                    best_solution = [row[:] for row in current_solution] 
                     best_score = current_score
 
             # Cool down the temperature
             temperature *= cooling_rate
+            
         except:
 
             print("Break asked")
