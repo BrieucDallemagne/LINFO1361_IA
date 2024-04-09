@@ -17,10 +17,10 @@ class NAmazonsProblem(Problem):
     def __init__(self, N):
         self.N = N
         self.initial = [-1] * N
+        self.next_to_fill = 0
         self.positions = []
         self.board = [["□"] * N for _ in range(N)] # Create an empty board
         self.forbidden_positions = [] # it is a set of tuple (x,y) where x is the row and y is the column
-        print(1)
     
     def add_forbidden_positions(self, row,col):
         if (row,col) not in self.forbidden_positions:
@@ -99,27 +99,28 @@ class NAmazonsProblem(Problem):
         iterator, rather than building them all at once."""
         # We can only fill left to right, and we can only place one queen in each column
         # get first index where self.initial[i] == -1
-        col_to_fill = state.index(-1)
-        
-        available_rows = []
-        
         for i in range(self.N):
-            if (col_to_fill,i) not in self.forbidden_positions:
-                available_rows.append(i)
+            if state[i] == -1:
+                self.next_to_fill = i
+                break
         
-        # Now need to check if the new piece is not attacking any other piece
+        available_pos = []
         
-        return available_rows
-
+        
+        for row in range(self.N):
+            if self.not_attacked(state,(row,self.next_to_fill)):
+                available_pos.append(row)
+        
+        # return le premier actuellement mais on devra évaluer avec h
+        return available_pos[0]
 
     def result(self, state, row):
         """Return the state that results from executing the given
         action in the given state. The action must be one of
         self.actions(state)."""
-        print(3)
-        
-        return state
-        
+        new_state = state.copy()
+        new_state[self.next_to_fill] = row
+        return new_state
 
     def goal_test(self, state):
         """Return True if the state is a goal. The default method compares the
@@ -130,36 +131,31 @@ class NAmazonsProblem(Problem):
             if state[i] == -1:
                 return False
         for i in range(self.N):
-            for j in range(i+1,self.N):
-                if self.is_attacking((i,state[i]),(j,state[j])):
-                            return False        
+            if not self.not_attacked(state,(state[i],i)):
+                return False
+
         return True
 
     def h(self, node):
-        print(5)
         """ Return the heuristic value for a given state. Default heuristic is 0."""
         return 0
             
 
 
-    def is_attacking(self,dame1,dame2):
-        x1 = dame1[0]
-        y1 = dame1[1]
-        x2 = dame2[0]
-        y2 = dame2[1]
-        if x1 == x2 or y1 == y2 or abs(x1 - x2) == abs(y1 - y2) :
-            return True  
-        lst = [(1,4),(-1,4),(1,-4),(-1,-4),(4,1),(-4,1),(4,-1),(-4,-1),(2,3),(-2,3),(2,-3),(-2,-3),(3,2),(-3,2),(3,-2),(-3,-2)]
-        for i in lst:
-            if (x1 + i[0] == x2 and y1 + i[1] == y2):
-                return True
-            
-        #same move but in diagonal
-        lst2 = [(5,3),(-5,3),(5,-3),(-5,-3),(3,5),(-3,5),(3,-5),(-3,-5),(5,1),(-5,1),(5,-1),(-5,-1),(1,5),(-1,5),(1,-5),(-1,-5)]
-        for i in lst2:
-            if (x1 + i[0] == x2 and y1 + i[1] == y2):
-                return True
-        return False
+    def not_attacked(self,state,dame):
+        x1 = dame[0]
+        y1 = dame[1]
+        for j in range(self.N):
+            if state[j] != -1:
+                x2 = j
+                y2 = state[j]
+                if x1 == x2 or y1 == y2 or abs(x1 - x2) == abs(y1 - y2) :
+                    return False
+                lst = [[1,4],[-1,4],[1,-4],[-1,-4],[4,1],[-4,1],[4,-1],[-4,-1],[2,3],[-2,3],[2,-3],[-2,-3],[3,2],[-3,2],[3,-2],[-3,-2]]
+                for i in lst:
+                    if (x1 + i[0] == x2 and y1 + i[1] == y2):
+                        return False
+        return True
         
 
 #####################
@@ -167,10 +163,10 @@ class NAmazonsProblem(Problem):
 #####################
 
 problem = NAmazonsProblem(int(sys.argv[1]))
-problem.compute_board(problem.initial,0,0)
-pprint.pprint(problem.board)
-print(problem.forbidden_positions)
-print(problem.actions(problem.initial))
+#problem.compute_board(problem.initial,0,0)
+#pprint.pprint(problem.board)
+#print(problem.forbidden_positions)
+#print(problem.actions(problem.initial))
 
 start_timer = time.perf_counter()
 
