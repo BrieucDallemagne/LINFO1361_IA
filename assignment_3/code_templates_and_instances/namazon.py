@@ -19,10 +19,16 @@ class NAmazonsProblem(Problem):
         self.initial = [-1] * N
         self.positions = []
         self.board = [["□"] * N for _ in range(N)] # Create an empty board
+        self.forbidden_positions = [] # it is a set of tuple (x,y) where x is the row and y is the column
         print(1)
-                
+    
+    def add_forbidden_positions(self, row,col):
+        if (row,col) not in self.forbidden_positions:
+            self.forbidden_positions.append((row,col))
+    
     def compute_board(self,state,col, row):
         self.board[row][col] = "🩎"
+        self.initial[col] = 1
         
         NW_length = min(row,col)
         NE_length = min(row,self.N - col - 1)
@@ -32,18 +38,24 @@ class NAmazonsProblem(Problem):
         # compute the queen moves
         for i in range(1, self.N):
             # horizontal and vertical moves
+            self.add_forbidden_positions(row,(col+i)%self.N)
+            self.add_forbidden_positions((row+i)%self.N,col)
             self.board[row][(col+i)%self.N] = "■"
             self.board[(row+i)%self.N][col] = "■"
             
             # diagonal moves
             
         for i in range(1, NW_length + 1):
+            self.add_forbidden_positions(row-i,col-i)
             self.board[row-i][col-i] = "■"
         for i in range(1, NE_length + 1):
+            self.add_forbidden_positions(row-i,(col+i)%self.N)
             self.board[row-i][(col+i)%self.N] = "■"
         for i in range(1, SW_length + 1):
+            self.add_forbidden_positions((row+i)%self.N,col-i)
             self.board[(row+i)%self.N][col-i] = "■"
         for i in range(1, SE_length + 1):
+            self.add_forbidden_positions((row+i)%self.N,(col+i)%self.N)
             self.board[(row+i)%self.N][(col+i)%self.N] = "■"
             
         # compute the super knight moves
@@ -51,91 +63,34 @@ class NAmazonsProblem(Problem):
         for i in [-1, 1]:
             if col + i*4 >= 0:
                 if row -1 >= 0:
+                    self.add_forbidden_positions(row-1,col+4*i)
                     self.board[row-1][col+4*i] = "■"
                 if row + 1 < self.N:
+                    self.add_forbidden_positions(row+1,col+4*i)
                     self.board[row+1][col+4*i] = "■"
             if row + i*4 >= 0:
                 if col -1 >= 0:
+                    self.add_forbidden_positions(row+4*i,col-1)
                     self.board[row+4*i][col-1] = "■"
                 if col + 1 < self.N:
+                    self.add_forbidden_positions(row+4*i,col+1)
                     self.board[row+4*i][col+1] = "■"
         # the 3-2 moves
         for i in [-1, 1]:
             if col + i*3 >= 0:
                 if row -2 >= 0:
+                    self.add_forbidden_positions(row-2,col+3*i)
                     self.board[row-2][col+3*i] = "■"
                 if row + 2 < self.N:
+                    self.add_forbidden_positions(row+2,col+3*i)
                     self.board[row+2][col+3*i] = "■"
             if row + i*3 >= 0:
                 if col -2 >= 0:
+                    self.add_forbidden_positions(row+3*i,col-2)
                     self.board[row+3*i][col-2] = "■"
                 if col + 2 < self.N:
+                    self.add_forbidden_positions(row+3*i,col+2)
                     self.board[row+3*i][col+2] = "■"
-
-    def bad_position(self, col,row):
-        if self.board[row][col] == "■":
-            return True
-        
-        NW_length = min(row,col)
-        NE_length = min(row,self.N - col - 1)
-        SW_length = min(self.N - row - 1,col)
-        SE_length = min(self.N - row - 1,self.N - col - 1)
-        
-        # compute the queen moves
-        for i in range(1, self.N):
-            # horizontal and vertical moves
-            if self.board[row][(col+i)%self.N] == "🩎" or self.board[(row+i)%self.N][col] == "🩎":
-                return True
-            
-            # diagonal moves
-            
-        for i in range(1, NW_length + 1):
-            if self.board[row-i][col-i] == "🩎":
-                return True
-        for i in range(1, NE_length + 1):
-            if self.board[row-i][(col+i)%self.N] == "🩎":
-                return True
-        for i in range(1, SW_length + 1):
-            if self.board[(row+i)%self.N][col-i] == "🩎":
-                return True
-        for i in range(1, SE_length + 1):
-            if self.board[(row+i)%self.N][(col+i)%self.N] == "🩎":
-                return True
-            
-        # compute the super knight moves
-        # the 4-1 moves
-        for i in [-1, 1]:
-            if col + i*4 >= 0:
-                if row -1 >= 0:
-                    if self.board[row-1][col+4*i] == "🩎":
-                        return True
-                if row + 1 < self.N:
-                    if self.board[row+1][col+4*i] == "🩎":
-                        return True
-            if row + i*4 >= 0:
-                if col -1 >= 0:
-                    if self.board[row+4*i][col-1] == "🩎":
-                        return True
-                if col + 1 < self.N:
-                    if self.board[row+4*i][col+1] == "🩎":
-                        return True
-        # the 3-2 moves
-        for i in [-1, 1]:
-            if col + i*3 >= 0:
-                if row -2 >= 0:
-                    if self.board[row-2][col+3*i] == "🩎":
-                        return True
-                if row + 2 < self.N:
-                    if self.board[row+2][col+3*i] == "🩎":
-                        return True
-            if row + i*3 >= 0:
-                if col -2 >= 0:
-                    if self.board[row+3*i][col-2] == "🩎":
-                        return True
-                if col + 2 < self.N:
-                    if self.board[row+3*i][col+2] == "🩎":
-                        return True
-        
 
     def actions(self, state):
         """Return the actions that can be executed in the given
@@ -149,7 +104,7 @@ class NAmazonsProblem(Problem):
         available_rows = []
         
         for i in range(self.N):
-            if not self.bad_position(col_to_fill,i):
+            if (col_to_fill,i) not in self.forbidden_positions:
                 available_rows.append(i)
         
         return available_rows
@@ -210,6 +165,9 @@ class NAmazonsProblem(Problem):
 #####################
 
 problem = NAmazonsProblem(int(sys.argv[1]))
+problem.compute_board(problem.initial,0,0)
+pprint.pprint(problem.board)
+print(problem.forbidden_positions)
 print(problem.actions(problem.initial))
 
 start_timer = time.perf_counter()
