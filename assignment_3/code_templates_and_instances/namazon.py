@@ -28,7 +28,7 @@ class NAmazonsProblem(Problem):
     
     def compute_board(self,state,col, row):
         self.board[row][col] = "🩎"
-        self.initial[col] = 1
+        self.initial[col] = row
         
         NW_length = min(row,col)
         NE_length = min(row,self.N - col - 1)
@@ -106,6 +106,8 @@ class NAmazonsProblem(Problem):
         for i in range(self.N):
             if (col_to_fill,i) not in self.forbidden_positions:
                 available_rows.append(i)
+        
+        # Now need to check if the new piece is not attacking any other piece
         
         return available_rows
 
