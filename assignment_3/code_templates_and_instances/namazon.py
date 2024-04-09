@@ -16,7 +16,7 @@ class NAmazonsProblem(Problem):
     """
     def __init__(self, N):
         self.N = N
-        self.initial = [-1] * N
+        self.initial = tuple([-1] * N)
         self.board = [["□"] * N for _ in range(N)] # Create an empty board
         self.forbidden_positions = [] # it is a set of tuple (x,y) where x is the row and y is the column
     
@@ -97,39 +97,31 @@ class NAmazonsProblem(Problem):
         iterator, rather than building them all at once."""
         # We can only fill left to right, and we can only place one queen in each column
         # get first index where self.initial[i] == -1
-        empty_col = list(filter(lambda x: state[x] == -1, range(self.N)))
+        first_col = state.index(-1)
+        print(first_col)
         
         available_pos = []
         
-        for col in empty_col:
-            for row in range(self.N):
-                if self.not_attacked(state,(row,col)):
-                    available_pos.append(row,col)
-        
-        # return le premier actuellement mais on devra évaluer avec h
-        return available_pos[0]
+        for row in range(self.N):
+            if self.not_attacked(state,(row,first_col)):
+                available_pos.append((row,first_col))
+
+        return available_pos
 
     def result(self, state, action):
         """Return the state that results from executing the given
         action in the given state. The action must be one of
         self.actions(state)."""
-        
+        state = list(state)
         state[action[1]] = action[0]
-        return state
+        return tuple(state)
 
     def goal_test(self, state):
         """Return True if the state is a goal. The default method compares the
         state to self.goal or checks for state in self.goal if it is a
         list, as specified in the constructor. Override this method if
         checking against a single self.goal is not enough."""
-        for i in range(self.N):
-            if state[i] == -1:
-                return False
-        for i in range(self.N):
-            if not self.not_attacked(state,(state[i],i)):
-                return False
-
-        return True
+        return -1 not in state
 
     def h(self, node):
         """ Return the heuristic value for a given state. Default heuristic is 0."""
@@ -150,6 +142,8 @@ class NAmazonsProblem(Problem):
                 for i in lst:
                     if (x1 + i[0] == x2 and y1 + i[1] == y2):
                         return False
+            else: 
+                break
         return True
         
 
@@ -163,12 +157,21 @@ problem = NAmazonsProblem(int(sys.argv[1]))
 #print(problem.forbidden_positions)
 #print(problem.actions(problem.initial))
 
+
+print(problem.actions(problem.initial))
+state = problem.result(problem.initial,problem.actions(problem.initial)[0])
+print(problem.actions(state))
+
+exit()
+
 start_timer = time.perf_counter()
 
-node = astar_search(problem)
+node = astar_search(problem, display=True)
 
 end_timer = time.perf_counter()
 
+print(end_timer - start_timer)
+print(node)
 
 # example of print
 path = node.path()
