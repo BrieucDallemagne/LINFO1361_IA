@@ -17,8 +17,6 @@ class NAmazonsProblem(Problem):
     def __init__(self, N):
         self.N = N
         self.initial = [-1] * N
-        self.next_to_fill = 0
-        self.positions = []
         self.board = [["□"] * N for _ in range(N)] # Create an empty board
         self.forbidden_positions = [] # it is a set of tuple (x,y) where x is the row and y is the column
     
@@ -99,28 +97,25 @@ class NAmazonsProblem(Problem):
         iterator, rather than building them all at once."""
         # We can only fill left to right, and we can only place one queen in each column
         # get first index where self.initial[i] == -1
-        for i in range(self.N):
-            if state[i] == -1:
-                self.next_to_fill = i
-                break
+        empty_col = list(filter(lambda x: state[x] == -1, range(self.N)))
         
         available_pos = []
         
-        
-        for row in range(self.N):
-            if self.not_attacked(state,(row,self.next_to_fill)):
-                available_pos.append(row)
+        for col in empty_col:
+            for row in range(self.N):
+                if self.not_attacked(state,(row,col)):
+                    available_pos.append(row,col)
         
         # return le premier actuellement mais on devra évaluer avec h
         return available_pos[0]
 
-    def result(self, state, row):
+    def result(self, state, action):
         """Return the state that results from executing the given
         action in the given state. The action must be one of
         self.actions(state)."""
-        new_state = state.copy()
-        new_state[self.next_to_fill] = row
-        return new_state
+        
+        state[action[1]] = action[0]
+        return state
 
     def goal_test(self, state):
         """Return True if the state is a goal. The default method compares the
