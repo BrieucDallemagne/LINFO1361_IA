@@ -2,15 +2,31 @@ import random
 import time
 import math
 import sys
+import numpy as np
 
  
 
 def objective_score(board):
-    pass #TODO: Implement the objective function to calculate the score of the board
+    score = 0
+    for i in range(9):
+        score += 9-len(np.unique(board[i])) 
+        score += 9-len(np.unique([board[j][i] for j in range(9)]))
+    return score
 
- 
+def remplir_zeros(array):
+    counts = [np.count_nonzero(array == i) for i in range(1, 10)]
+    for i in range(len(array)):
+        for j in range(len(array[i])):
+            if array[i][j] == 0:
+                for k in range(1, 10):
+                    if counts[k-1] < 9:
+                        array[i][j] = k
+                        counts[k-1] += 1
+                        break
+    return array
+        
 
- 
+
 
 def simulated_annealing_solver(initial_board):
 
@@ -21,18 +37,31 @@ def simulated_annealing_solver(initial_board):
     
     current_score = objective_score(current_solution)
     best_score = current_score
+    n = 0
 
     temperature = 1.0
-    cooling_rate = ...  #TODO: Adjust this parameter to control the cooling rate
+    cooling_rate = 0.999
 
     while temperature > 0.0001:
 
         try:  
+            n += 1
+            
+            neighbor = current_solution.copy()           
+            neighbor_score = 0
+            if n == 1:
+                neighbor = remplir_zeros(neighbor)
+                neighbor_score = objective_score(neighbor)
+            else:
+                for i in range(9):
+                    pos1 = (random.randint(0, 8), random.randint(0, 8))
+                    pos2 = (random.randint(0, 8), random.randint(0, 8))
+                    while initial_board[pos1[0]][pos1[1]] != 0 or initial_board[pos2[0]][pos2[1]] != 0:
+                        pos1 = (random.randint(0, 8), random.randint(0, 8))
+                        pos2 = (random.randint(0, 8), random.randint(0, 8))
+                    
+                        neighbor[pos1[0]][pos1[1]], neighbor[pos2[0]][pos2[1]] = neighbor[pos2[0]][pos2[1]], neighbor[pos1[0]][pos1[1]]
 
-            # TODO: Generate a neighbor (Don't forget to skip non-zeros tiles in the initial board ! It will be verified on Inginious.)
-            ...
-            neighbor = ...
-           
 
             # Evaluate the neighbor
             neighbor_score = objective_score(neighbor)
