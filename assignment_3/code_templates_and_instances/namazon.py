@@ -19,77 +19,8 @@ class NAmazonsProblem(Problem):
         self.initial = tuple([-1] * N)
         self.board = [["□"] * N for _ in range(N)] # Create an empty board
         self.forbidden_positions = [] # it is a set of tuple (x,y) where x is the row and y is the column
+        self.occupied_col = {i:{j:[] for j in range(N)} for i in range(N)} # it is a dictionary where the key is the column and there is the list of forbidden positions due to the queens in that column
     
-    def add_forbidden_positions(self, row,col):
-        if (row,col) not in self.forbidden_positions:
-            self.forbidden_positions.append((row,col))
-    
-    def compute_board(self,state,col, row):
-        self.board[row][col] = "🩎"
-        self.initial[col] = row
-        
-        NW_length = min(row,col)
-        NE_length = min(row,self.N - col - 1)
-        SW_length = min(self.N - row - 1,col)
-        SE_length = min(self.N - row - 1,self.N - col - 1)
-        
-        # compute the queen moves
-        for i in range(1, self.N):
-            # horizontal and vertical moves
-            self.add_forbidden_positions(row,(col+i)%self.N)
-            self.add_forbidden_positions((row+i)%self.N,col)
-            self.board[row][(col+i)%self.N] = "■"
-            self.board[(row+i)%self.N][col] = "■"
-            
-            # diagonal moves
-            
-        for i in range(1, NW_length + 1):
-            self.add_forbidden_positions(row-i,col-i)
-            self.board[row-i][col-i] = "■"
-        for i in range(1, NE_length + 1):
-            self.add_forbidden_positions(row-i,(col+i)%self.N)
-            self.board[row-i][(col+i)%self.N] = "■"
-        for i in range(1, SW_length + 1):
-            self.add_forbidden_positions((row+i)%self.N,col-i)
-            self.board[(row+i)%self.N][col-i] = "■"
-        for i in range(1, SE_length + 1):
-            self.add_forbidden_positions((row+i)%self.N,(col+i)%self.N)
-            self.board[(row+i)%self.N][(col+i)%self.N] = "■"
-            
-        # compute the super knight moves
-        # the 4-1 moves
-        for i in [-1, 1]:
-            if col + i*4 >= 0:
-                if row -1 >= 0:
-                    self.add_forbidden_positions(row-1,col+4*i)
-                    self.board[row-1][col+4*i] = "■"
-                if row + 1 < self.N:
-                    self.add_forbidden_positions(row+1,col+4*i)
-                    self.board[row+1][col+4*i] = "■"
-            if row + i*4 >= 0:
-                if col -1 >= 0:
-                    self.add_forbidden_positions(row+4*i,col-1)
-                    self.board[row+4*i][col-1] = "■"
-                if col + 1 < self.N:
-                    self.add_forbidden_positions(row+4*i,col+1)
-                    self.board[row+4*i][col+1] = "■"
-        # the 3-2 moves
-        for i in [-1, 1]:
-            if col + i*3 >= 0:
-                if row -2 >= 0:
-                    self.add_forbidden_positions(row-2,col+3*i)
-                    self.board[row-2][col+3*i] = "■"
-                if row + 2 < self.N:
-                    self.add_forbidden_positions(row+2,col+3*i)
-                    self.board[row+2][col+3*i] = "■"
-            if row + i*3 >= 0:
-                if col -2 >= 0:
-                    self.add_forbidden_positions(row+3*i,col-2)
-                    self.board[row+3*i][col-2] = "■"
-                if col + 2 < self.N:
-                    self.add_forbidden_positions(row+3*i,col+2)
-                    self.board[row+3*i][col+2] = "■"
-
     def actions(self, state):
         """Return the actions that can be executed in the given
         state. The result would typically be a list, but if there are
@@ -103,7 +34,7 @@ class NAmazonsProblem(Problem):
         for row in range(self.N):
             if self.not_attacked(state,(row,first_col)):
                 available_pos.append((row,first_col))
-
+        #print(available_pos, first_col)
         return available_pos
 
     def result(self, state, action):
@@ -112,6 +43,38 @@ class NAmazonsProblem(Problem):
         self.actions(state)."""
         state = list(state)
         state[action[1]] = action[0]
+        
+        tmp = []
+        # Need to update the forbidden positions
+        # Did basic line
+        tmp += [(action[0],action[1])]
+        tmp += [(i%self.N,action[1]) for i in range( self.N)]
+        tmp += [(action[0],i%self.N) for i in range( self.N)]
+        
+        # Need to do Diagonal
+        for i in range(1,self.N):
+            if action[0] + i < self.N and action[1] + i < self.N:
+                tmp += [(action[0] + i,action[1] + i)]
+            if action[0] - i >= 0 and action[1] - i >= 0:
+                tmp += [(action[0] - i,action[1] - i)]
+            if action[0] + i < self.N and action[1] - i >= 0:
+                tmp += [(action[0] + i,action[1] - i)]
+            if action[0] - i >= 0 and action[1] + i < self.N:
+                tmp += [(action[0] - i,action[1] + i)]
+        
+        # Knight moves
+        lst = [[1,4],[-1,4],[1,-4],[-1,-4],[4,1],[-4,1],[4,-1],[-4,-1],[2,3],[-2,3],[2,-3],[-2,-3],[3,2],[-3,2],[3,-2],[-3,-2]]
+        for i in lst:
+            if (action[0] + i[0] >= 0 and action[0] + i[0] < self.N and action[1] + i[1] >= 0 and action[1] + i[1] < self.N):
+                tmp += [(action[0] + i[0],action[1] + i[1])]
+        
+        # Keep only unique values
+        tmp = list(set(tmp))    
+        
+        self.occupied_col[action[1]][action[0]] = tmp
+            
+            
+        #self.debug(state)            
         return tuple(state)
 
     def goal_test(self, state):
@@ -124,8 +87,30 @@ class NAmazonsProblem(Problem):
     def h(self, node):
         """ Return the heuristic value for a given state. Default heuristic is 0."""
         return 0
+    
+    def debug(self,state):
+        board = [["□"] * self.N for _ in range(self.N)]
+
+        for i, pos in enumerate(state):
+            if pos == -1:
+                break
+            for lst_col in self.occupied_col[i][pos]:
+                board[lst_col[0]][lst_col[1]] = "■"
+        
+        pprint.pprint(board)
             
 
+
+    def not_attacked_SPACE(self,state,queen):
+        row = queen[0]
+        col = queen[1]
+        
+        for i,pos in enumerate(state):
+            if pos == -1:
+                break
+            if (row,col) in self.occupied_col[i][pos]:
+                return False
+        return True
 
     def not_attacked(self,state,dame):
         """Check if the dame is not attacked by the queens in the state
@@ -171,6 +156,7 @@ print(problem.actions(state))
 
 exit()
 """
+
 start_timer = time.perf_counter()
 
 node = astar_search(problem, display=True)
