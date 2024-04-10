@@ -58,15 +58,14 @@ def random_swap(board,initial_board):
     
     sub_board = find_subcarre(board)
     sub_initial_board = find_subcarre(initial_board)
-    for _ in range(10):
+    board = random.randint(0,8)
+    i = random.randint(0,8)
+    j = random.randint(0,8)
+    while sub_initial_board[board][i] != 0 or sub_initial_board[board][j] != 0 or i == j:
         board = random.randint(0,8)
         i = random.randint(0,8)
         j = random.randint(0,8)
-        while sub_initial_board[board][i] != 0 or sub_initial_board[board][j] != 0:
-            board = random.randint(0,8)
-            i = random.randint(0,8)
-            j = random.randint(0,8)
-        sub_board[board][i],sub_board[board][j] = sub_board[board][j],sub_board[board][i]
+    sub_board[board][i],sub_board[board][j] = sub_board[board][j],sub_board[board][i]
     toreturn = subcarres_to_sudoku(sub_board)
     return toreturn
     
@@ -102,7 +101,7 @@ def simulated_annealing_solver(initial_board):
                 neighbor = remplir_zeros(neighbor)
                 neighbor_score = objective_score(neighbor)
             else:
-                random_swap(neighbor,initial_board)
+                neighbor = random_swap(neighbor,initial_board)
                 neighbor_score = objective_score(neighbor)
             
             # Calculate acceptance probability
