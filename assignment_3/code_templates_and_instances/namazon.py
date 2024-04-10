@@ -165,6 +165,19 @@ class NAmazonsProblem(Problem):
         return True
         
 
+def convert_state(state):
+    board = [["#"] * len(state) for _ in range(len(state))]
+    
+    for i,pos in enumerate(state):
+        if pos == -1:
+            break
+        board[pos][i] = "A"
+        
+    for i in range(len(state)):
+        board[i] = "".join(board[i])
+    
+    return "\n".join(board)
+
 #####################
 # Launch the search #
 #####################
@@ -194,7 +207,7 @@ print('Number of moves: ', str(node.depth))
 
 for n in path:
 
-    print(n.state)  # assuming that the _str_ function of state outputs the correct format
+    print(convert_state(n.state))  # assuming that the _str_ function of state outputs the correct format
 
     print()
     
