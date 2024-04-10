@@ -86,7 +86,15 @@ class NAmazonsProblem(Problem):
 
     def h(self, node):
         """ Return the heuristic value for a given state. Default heuristic is 0."""
-        return 0
+        if -1 not in node.state:
+            return 0
+        last_col = node.state.index(-1) - 1
+        last_row = node.state[last_col]
+        
+        if last_col == -1:
+            return 0
+        
+        return len(self.occupied_col[last_col][last_row])
     
     def debug(self,state):
         board = [["□"] * self.N for _ in range(self.N)]
@@ -98,7 +106,23 @@ class NAmazonsProblem(Problem):
                 board[lst_col[0]][lst_col[1]] = "■"
         
         pprint.pprint(board)
+    
+    def path_cost(self, c, state1, action, state2):
+        forbidden_before = []
+        for i, pos in enumerate(state1):
+            if pos == -1:
+                break
+            forbidden_before += self.occupied_col[i][pos]
+        forbidden_before = list(set(forbidden_before)) 
+               
+        forbidden_after = []
+        for i, pos in enumerate(state2):
+            if pos == -1:
+                break
+            forbidden_after += self.occupied_col[i][pos]
+        forbidden_after = list(set(forbidden_after))    
             
+        return c + len(forbidden_after) - len(forbidden_before)
 
 
     def not_attacked_SPACE(self,state,queen):
