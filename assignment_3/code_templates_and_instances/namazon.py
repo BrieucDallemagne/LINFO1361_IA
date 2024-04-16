@@ -189,34 +189,24 @@ def convert_state(state):
 #####################
 # Launch the search #
 #####################
+if __name__ == "__main__":
+    problem = NAmazonsProblem(int(sys.argv[1]))
 
-problem = NAmazonsProblem(int(sys.argv[1]))
+    start_timer = time.perf_counter()
 
-"""
-print(problem.actions(problem.initial))
-state = problem.result(problem.initial,problem.actions(problem.initial)[0])
-state = problem.result(state,problem.actions(state)[0])
-print(state)
-print(problem.actions(state))
+    node = astar_search(problem, display=False)
 
-exit()
-"""
+    end_timer = time.perf_counter()
 
-start_timer = time.perf_counter()
+    # example of print
+    path = node.path()
 
-node = astar_search(problem, display=False)
+    print('Number of moves: ', str(node.depth))
 
-end_timer = time.perf_counter()
+    for n in path:
 
-# example of print
-path = node.path()
+        print(convert_state(n.state))  # assuming that the _str_ function of state outputs the correct format
 
-print('Number of moves: ', str(node.depth))
-
-for n in path:
-
-    print(convert_state(n.state))  # assuming that the _str_ function of state outputs the correct format
-
-    print()
-     
-#print("Time: ", end_timer - start_timer)
+        print()
+        
+    #print("Time: ", end_timer - start_timer)
