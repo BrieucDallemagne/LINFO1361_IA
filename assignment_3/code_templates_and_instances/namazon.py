@@ -37,6 +37,13 @@ class NAmazonsProblem(Problem):
         #print(available_pos, first_col)
         return available_pos
 
+    def result_p(self, state, action):
+        state = list(state)
+        state[action[1]] = action[0]
+        
+        return tuple(state)
+
+
     def result(self, state, action):
         """Return the state that results from executing the given
         action in the given state. The action must be one of
@@ -88,13 +95,16 @@ class NAmazonsProblem(Problem):
             - We check how many spots are not attacked and the smaller the number is the better the state is
         """
         if -1 not in node.state:
-            return - self.N*100000
+            return - self.N*self.N*100000
         
         val = 0
         
         # Check how many remaining queens can be placed
-        val = node.state.count(-1) - self.N
+        val = (node.state.count(-1) - self.N) #adding a weight to this part
         
+        val += (self.actions(node.state).__len__() - self.N)
+        
+        return val
         # Check how many spots are not attacked
         tmp = None
         for i in range(self.N):
@@ -194,7 +204,7 @@ exit()
 
 start_timer = time.perf_counter()
 
-node = astar_search(problem, display=True)
+node = astar_search(problem, display=False)
 
 end_timer = time.perf_counter()
 
@@ -209,4 +219,4 @@ for n in path:
 
     print()
      
-print("Time: ", end_timer - start_timer)
+#print("Time: ", end_timer - start_timer)
