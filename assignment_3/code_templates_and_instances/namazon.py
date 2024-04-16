@@ -19,7 +19,7 @@ class NAmazonsProblem(Problem):
         self.initial = tuple([-1] * N)
         self.board = [["□"] * N for _ in range(N)] # Create an empty board
         self.forbidden_positions = [] # it is a set of tuple (x,y) where x is the row and y is the column
-        self.occupied_col = {i:{j:[] for j in range(N)} for i in range(N)} # it is a dictionary where the key is the column and there is the list of forbidden positions due to the queens in that column
+        self.occupied_col = {i:{j:{} for j in range(N)} for i in range(N)} # it is a dictionary where the key is the column and there is the set of forbidden positions due to the queens in that column
     
     def actions(self, state):
         """Return the actions that can be executed in the given
@@ -44,37 +44,32 @@ class NAmazonsProblem(Problem):
         state = list(state)
         state[action[1]] = action[0]
         
-        tmp = []
+        tmp = {(action[0],action[1])}
         # Need to update the forbidden positions
         # Did basic line
-        tmp += [(action[0],action[1])]
-        tmp += [(i%self.N,action[1]) for i in range( self.N)]
-        tmp += [(action[0],i%self.N) for i in range( self.N)]
+        tmp.update({(i%self.N,action[1]) for i in range( self.N)})
+        tmp.update({(action[0],i%self.N) for i in range( self.N)})
         
         # Need to do Diagonal
         for i in range(1,self.N):
             if action[0] + i < self.N and action[1] + i < self.N:
-                tmp += [(action[0] + i,action[1] + i)]
+                tmp.add((action[0] + i,action[1] + i))
             if action[0] - i >= 0 and action[1] - i >= 0:
-                tmp += [(action[0] - i,action[1] - i)]
+                tmp.add((action[0] - i,action[1] - i))
             if action[0] + i < self.N and action[1] - i >= 0:
-                tmp += [(action[0] + i,action[1] - i)]
+                tmp.add((action[0] + i,action[1] - i))
             if action[0] - i >= 0 and action[1] + i < self.N:
-                tmp += [(action[0] - i,action[1] + i)]
+                tmp.add((action[0] - i,action[1] + i))
         
         # Knight moves
         lst = [[1,4],[-1,4],[1,-4],[-1,-4],[4,1],[-4,1],[4,-1],[-4,-1],[2,3],[-2,3],[2,-3],[-2,-3],[3,2],[-3,2],[3,-2],[-3,-2]]
         for i in lst:
             if (action[0] + i[0] >= 0 and action[0] + i[0] < self.N and action[1] + i[1] >= 0 and action[1] + i[1] < self.N):
-                tmp += [(action[0] + i[0],action[1] + i[1])]
-        
-        # Keep only unique values
-        tmp = list(set(tmp))    
-        
+                tmp.add((action[0] + i[0],action[1] + i[1]))
+
         self.occupied_col[action[1]][action[0]] = tmp
-            
-            
-        #self.debug(state)            
+              
+        #self.debug(state)     
         return tuple(state)
 
     def goal_test(self, state):
@@ -85,16 +80,33 @@ class NAmazonsProblem(Problem):
         return -1 not in state
 
     def h(self, node):
-        """ Return the heuristic value for a given state. Default heuristic is 0."""
+        """ Return the heuristic value for a given state. The lower the value is the better the state is
+        
+        Idea of our heuristic:
+            - If there is no more queens to place, we return a really small number
+            - We count how many spots are yet to fill in the board and return N - left_to_fill
+            - We check how many spots are not attacked and the smaller the number is the better the state is
+        """
         if -1 not in node.state:
-            return 0
-        last_col = node.state.index(-1) - 1
-        last_row = node.state[last_col]
+            return - self.N*100000
         
-        if last_col == -1:
-            return 0
+        val = 0
         
-        return len(self.occupied_col[last_col][last_row])
+        # Check how many remaining queens can be placed
+        val = node.state.count(-1) - self.N
+        
+        # Check how many spots are not attacked
+        tmp = None
+        for i in range(self.N):
+            if node.state[i] != -1:
+                if tmp is None:
+                    tmp = self.occupied_col[i][node.state[i]]
+                else:
+                    tmp.update(self.occupied_col[i][node.state[i]])
+        if tmp is not None:
+            val += len(tmp) - self.N*self.N
+        
+        return val
     
     def debug(self,state):
         board = [["□"] * self.N for _ in range(self.N)]
@@ -107,24 +119,10 @@ class NAmazonsProblem(Problem):
         
         pprint.pprint(board)
     
+    
     def path_cost(self, c, state1, action, state2):
-        forbidden_before = []
-        for i, pos in enumerate(state1):
-            if pos == -1:
-                break
-            forbidden_before += self.occupied_col[i][pos]
-        forbidden_before = list(set(forbidden_before)) 
-               
-        forbidden_after = []
-        for i, pos in enumerate(state2):
-            if pos == -1:
-                break
-            forbidden_after += self.occupied_col[i][pos]
-        forbidden_after = list(set(forbidden_after))    
-            
-        return c + len(forbidden_after) - len(forbidden_before)
-
-
+        return 0
+    
     def not_attacked_SPACE(self,state,queen):
         row = queen[0]
         col = queen[1]
@@ -210,5 +208,5 @@ for n in path:
     print(convert_state(n.state))  # assuming that the _str_ function of state outputs the correct format
 
     print()
-    
+     
 print("Time: ", end_timer - start_timer)
