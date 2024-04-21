@@ -1,12 +1,29 @@
 from namazon import *
 import matplotlib.pyplot as plt
 
-"""
-# Benchmarking variables
-sizes = [35]
-problems = [NAmazonsProblem(size) for size in sizes]
 
-compare_searchers(problems, ["nom", 35], [astar_search])
+
+# Benchmarking variables
+repeat = 1
+sizes = [13]#,11,12,13]#,14,15,20,25] #,30,35]
+problems = [NAmazonsProblem(size) for size in sizes]
+timing = [0 for _ in range(len(sizes))]
+
+start_timer = time.perf_counter()
+compare_searchers(problems, "NAZMZONS 0", [breadth_first_graph_search])
+end_timer = time.perf_counter()
+
+print("Time: ", end_timer - start_timer)
+
+for i,p in enumerate(problems):
+    for r in range(repeat):
+        start_timer = time.perf_counter()
+        node = depth_first_graph_search(p)
+        end_timer = time.perf_counter()
+        timing[i] += (end_timer - start_timer)
+timing = np.array(timing) / repeat
+print(timing)
+print(np.sum(timing))
 
 """
 x = [10,11,12,13,14,15,20,25,30,35]
@@ -36,3 +53,4 @@ plt.xlabel("NAmazons Size [N]")
 
 plt.savefig("benchmark_namazon.pdf")
 plt.show()
+"""
