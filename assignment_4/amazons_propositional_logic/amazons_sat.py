@@ -40,7 +40,53 @@ def get_expression(size: int, placed_amazons: list[(int, int)]) -> list[Clause]:
     :return: a list of clauses
     """
 
+    def within_bounds(x: int, y: int) -> bool:
+
+        return 0 <= x < size and 0 <= y < size
+
+    def add_clause(expression: list[Clause], x1: int, y1: int, x2: int, y2: int):
+
+        if within_bounds(x1, y1) and within_bounds(x2, y2):
+            clause = Clause(size)
+            clause.add_negative(x1, y1)
+            clause.add_negative(x2, y2)
+            expression.append(clause)
+
+    lst = [[1,4],[-1,4],[1,-4],[-1,-4],[4,1],[-4,1],[4,-1],[-4,-1],[2,3],[-2,3],[2,-3],[-2,-3],[3,2],[-3,2],[3,-2],[-3,-2]]
+
     expression = []
-    # your code here
+
+    for y in range(size):
+        for x1 in range(size):
+            for x2 in range(x1 + 1, size):
+                add_clause(expression, x1, y, x2, y)
+
+    for x in range(size):
+        for y1 in range(size):
+            for y2 in range(y1 + 1, size):
+                add_clause(expression, x, y1, x, y2)
+
+    for x1 in range(size):
+        for y1 in range(size):
+            for dx, dy in [(1, 1), (1, -1), (-1, 1), (-1, -1)]:
+                x2, y2 = x1 + dx, y1 + dy
+                while within_bounds(x2, y2):
+                    add_clause(expression, x1, y1, x2, y2)
+                    x2, y2 = x2 + dx, y2 + dy
+
+    for amazon in placed_amazons:
+        x, y = amazon
+        clause = Clause(size)
+        clause.add_positive(x, y)
+        expression.append(clause)
+
+    for x, y in placed_amazons:
+        for dx, dy in lst:
+            x1, y1 = x + dx, y + dy
+            if within_bounds(x1, y1):
+                clause = Clause(size)
+                clause.add_negative(x, y)
+                clause.add_negative(x1, y1)
+                expression.append(clause)
 
     return expression
