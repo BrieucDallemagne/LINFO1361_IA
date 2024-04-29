@@ -15,3 +15,4 @@ test_windows
 .venv
 *.npy
 output_randomVSalpha
+*.log
