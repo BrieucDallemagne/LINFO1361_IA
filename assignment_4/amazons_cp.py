@@ -1,5 +1,6 @@
 import sys
 from pycsp3 import *
+#import matplotlib.pyplot as plt # TO BE DELETED
 
 
 def read_instance(filename: str) -> (int, list[(int, int)]):
@@ -170,11 +171,56 @@ def amazons_cp(size: int, placed_amazons: list[(int, int)]) -> (bool, list[list[
     and output is 2D grid representing the solution: output[i][j] == 1 iff there is an amazon at row i and column j
     otherwise output[i][j] == 0
     """
+    
+
+    """
+    Columns is the set of variables and the domain of those variables is between 1 and N with N being the size of the board
+    Each value represent the row where the amazon is placed at a given index where the index represent the column
+    """
+    # Actually I need to use VarArray for this lol
+    columns = VarArray(size=size, dom=range(size)) # NEED TO FIGURE OUT HOW TO HANDLE ALREADY PLACE NAMAZON
+    already_placed = []
+    for placed in placed_amazons:
+        already_placed.append(columns[placed[0]] == placed[1])
 
     # Create the variables here
 
     satisfy(
-        # Write your constraints here
+        # Add the already placed amazons
+        already_placed,
+        # Check for horizontal is already done by the nature and description of the problem
+        # Check for horizontal line, 
+        [columns[i] != columns[j] for j in range(size)  for i in range(size) if j!=i],
+        # Check diagonal
+        [columns[i] != columns[j] + abs(j-i) for j in range(size)  for i in range(size) if j!=i],
+        [columns[i] != columns[j] - abs(j-i) for j in range(size)  for i in range(size) if j!=i],
+        [columns[i] != columns[j] + abs(-j+i) for j in range(size)  for i in range(size) if j!=i],
+        [columns[i] != columns[j] - abs(-j+i) for j in range(size)  for i in range(size) if j!=i],
+        
+        # Knight moves 
+        # 3-2 moves
+        # Vertically
+        [columns[i] != columns[i+2] + 3 for i in range(size) if i+2 < size],
+        [columns[i] != columns[i+2] - 3 for i in range(size) if i+2 < size],
+        [columns[i] != columns[i-2] + 3 for i in range(size) if i-2 > 0],
+        [columns[i] != columns[i-2] - 3 for i in range(size) if i+2 > 0],
+        # Horizontally        
+        [columns[i] != columns[i+3] + 2 for i in range(size) if i+3 < size],
+        [columns[i] != columns[i+3] - 2 for i in range(size) if i+3 < size],
+        [columns[i] != columns[i-3] + 2 for i in range(size) if i-3 > 0],
+        [columns[i] != columns[i-3] - 2 for i in range(size) if i+3 > 0],
+        
+        # 4-1 moves
+        # Vertically
+        [columns[i] != columns[i+1] + 4 for i in range(size) if i+1 < size],
+        [columns[i] != columns[i+1] - 4 for i in range(size) if i+1 < size],
+        [columns[i] != columns[i-1] + 4 for i in range(size) if i-1 > 0],
+        [columns[i] != columns[i-1] - 4 for i in range(size) if i+1 > 0],
+        # Horizontally
+        [columns[i] != columns[i+4] + 1 for i in range(size) if i+4 < size],
+        [columns[i] != columns[i+4] - 1 for i in range(size) if i+4 < size],
+        [columns[i] != columns[i-4] + 1 for i in range(size) if i-4 > 0],
+        [columns[i] != columns[i-4] - 1 for i in range(size) if i+4 > 0]
     )
 
     # output[i][j] == 1 iff there is an amazon at row i and column j
@@ -183,7 +229,9 @@ def amazons_cp(size: int, placed_amazons: list[(int, int)]) -> (bool, list[list[
 
     # Solve the model and retrieve the solution
     if solve(solver=CHOCO) is SAT:
-        status = True
+        status = True        
+        for val in enumerate(values(columns)):
+            output[val[0]][val[1]] = 1
         # Fill the output grid with solution
     else:
         status = False
@@ -191,7 +239,7 @@ def amazons_cp(size: int, placed_amazons: list[(int, int)]) -> (bool, list[list[
     # Do not remove this line ! Otherwise, errors will occur during 
     # the evaluation runned by Inginious
     clear()
-
+    
     # Do not change the output or Inginious will crash
     return status, output
 
@@ -207,3 +255,7 @@ if __name__ == '__main__':
         verify_n_amazons(solution, placed_amazons)
     else:
         print("No solution found")
+
+    # TO BE DELETED
+    #plt.matshow(solution)
+    #plt.show()
