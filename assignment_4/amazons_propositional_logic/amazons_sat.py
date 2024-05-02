@@ -40,53 +40,73 @@ def get_expression(size: int, placed_amazons: list[(int, int)]) -> list[Clause]:
     :return: a list of clauses
     """
 
-    def within_bounds(x: int, y: int) -> bool:
 
-        return 0 <= x < size and 0 <= y < size
-
-    def add_clause(expression: list[Clause], x1: int, y1: int, x2: int, y2: int):
-
-        if within_bounds(x1, y1) and within_bounds(x2, y2):
-            clause = Clause(size)
-            clause.add_negative(x1, y1)
-            clause.add_negative(x2, y2)
-            expression.append(clause)
-
-    lst = [[1,4],[-1,4],[1,-4],[-1,-4],[4,1],[-4,1],[4,-1],[-4,-1],[2,3],[-2,3],[2,-3],[-2,-3],[3,2],[-3,2],[3,-2],[-3,-2]]
+    lst = [(1, 4), (-1, 4), (1, -4), (-1, -4), (4, 1), 
+        (-4, 1), (4, -1), (-4, -1), (2, 3), (-2, 3),
+        (2, -3), (-2, -3), (3, 2), (-3, 2), (3, -2), (-3, -2)]
 
     expression = []
 
-    for y in range(size):
-        for x1 in range(size):
-            for x2 in range(x1 + 1, size):
-                add_clause(expression, x1, y, x2, y)
-
-    for x in range(size):
-        for y1 in range(size):
-            for y2 in range(y1 + 1, size):
-                add_clause(expression, x, y1, x, y2)
-
-    for x1 in range(size):
-        for y1 in range(size):
-            for dx, dy in [(1, 1), (1, -1), (-1, 1), (-1, -1)]:
-                x2, y2 = x1 + dx, y1 + dy
-                while within_bounds(x2, y2):
-                    add_clause(expression, x1, y1, x2, y2)
-                    x2, y2 = x2 + dx, y2 + dy
-
-    for amazon in placed_amazons:
-        x, y = amazon
+    for (i, j) in placed_amazons:
         clause = Clause(size)
-        clause.add_positive(x, y)
+        clause.add_positive(i, j)
         expression.append(clause)
 
-    for x, y in placed_amazons:
-        for dx, dy in lst:
-            x1, y1 = x + dx, y + dy
-            if within_bounds(x1, y1):
-                clause = Clause(size)
-                clause.add_negative(x, y)
-                clause.add_negative(x1, y1)
-                expression.append(clause)
+    for i in range(size):
+        clause = Clause(size)
+        for j in range(size):
+            clause.add_positive(i, j)
+        expression.append(clause)
+
+    for i in range(size):
+        for j in range(size):
+            for k in range( size):
+                if k != j:
+                    clause = Clause(size)
+                    clause.add_negative(i, j)
+                    clause.add_negative(i, k)
+                    expression.append(clause)
+
+    for i in range(size):
+        for j in range(size):
+            for k in range( size):
+                if k != i:
+                    clause = Clause(size)
+                    clause.add_negative(i, j)
+                    clause.add_negative(k, j)
+                    expression.append(clause)
+
+    #rising diagonals
+    for d in range(2*size - 1):
+        for i in range(max(0, d - size + 1), min(d + 1, size)):
+            for j in range(i+1, min(d + 1, size)):
+                if d - i < size and d - j < size:
+                    clause = Clause(size)
+                    clause.add_negative(i, d - i)
+                    clause.add_negative(j, d - j)
+                    expression.append(clause)
+
+    #falling diagonals
+    for d in range(-size + 1, size):
+        for i in range(max(0, -d), min(size, size - d)):
+            for j in range(i+1, min(size, size - d)):
+                if i + d < size and j + d < size:
+                    clause = Clause(size)
+                    clause.add_negative(i, i + d)
+                    clause.add_negative(j, j + d)
+                    expression.append(clause)
+
+
+    for i in range(size):
+        for j in range(size):
+            for (dx, dy) in lst:
+                x = i + dx
+                y = j + dy
+                if x >= 0 and x < size and y >= 0 and y < size:
+                    clause = Clause(size)
+                    clause.add_negative(i, j)
+                    clause.add_negative(x, y)
+                    expression.append(clause)
+
 
     return expression
